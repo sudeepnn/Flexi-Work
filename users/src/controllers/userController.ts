@@ -39,10 +39,10 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 
 
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
-  const { user_id, password ,role} = req.body;
+  const { user_id, password, role } = req.body;
 
-  if (!user_id || !password) {
-    res.status(400).json({ message: "Username and password are required" });
+  if (!user_id || !password || !role) {
+    res.status(400).json({ message: "Username, password, and role are required" });
     return;
   }
 
@@ -50,6 +50,11 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     const user = await User.findOne({ user_id });
     if (!user) {
       res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    if (user.role !== role) {
+      res.status(403).json({ message: "Invalid role selected" });
       return;
     }
 
@@ -65,12 +70,17 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       { expiresIn: '1h' }
     );
 
-    res.status(200).json({ message: "Login successful", token });
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      role: user.role // Include the role in the response
+    });
   } catch (err) {
     console.error("Login error:", err); 
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 export const getAllUsers = async (_: Request, res: Response) : Promise<void> => {
   try {
     const users = await User.find();

@@ -1,32 +1,19 @@
-import mongoose,{Schema,model} from "mongoose";
+import mongoose, { Document, Schema } from 'mongoose';
 
-interface Workspace {
-    department: string;
-    floor: number;
-    available: boolean;
-    bookedBy: string;
-  }
+export interface IWorkspace extends Document {
+  workspace_id : number
+  department: string;
+  floor: number;
+  location: string;
+  availability: boolean;
+}
 
-const workspaceSchema =new Schema<Workspace>({
-    department: {
-        type: String,
-        required: true
-    },
-    floor: {
-        type: Number,
-        required: true
-    },
-    available: {
-        type: Boolean,
-        required: true
-    },
-    bookedBy: {
-        type: String,
-        required: false
-    }
-})
+const WorkspaceSchema: Schema<IWorkspace> = new Schema({
+  workspace_id : {type: Number, required: true, unique: true},
+  department: { type: String, required: true },
+  floor: { type: Number, required: true },
+  location: { type: String, required: true },
+  availability: { type: Boolean, default: true },
+});
 
-const WorkspaceModel = model<Workspace>('workspace', workspaceSchema)
-
-export default WorkspaceModel;
-
+export default mongoose.model<IWorkspace>('Workspace', WorkspaceSchema);

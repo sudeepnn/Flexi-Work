@@ -3,7 +3,7 @@ import { router } from "./routes/routes";
 import dbconnection from "./config/db";
 import bodyParser from "body-parser";
 const app = express();
-const port=3000
+const port=3004
 app.use(bodyParser.json());
 
 dbconnection()
