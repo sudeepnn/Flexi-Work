@@ -1,11 +1,14 @@
 import express from "express";
-import { getParkingSlots, postParkingSlot, putParkingSlot, deleteParkingSlot } from "../controller/parking_cnt";
+import { getAllParkingSlots, postParkingSlot, putParkingSlot, deleteParkingSlot, getAvailableParkingSlots, bookParkingSlot, cancelBooking } from "../controller/parking_cnt";
 
 const router = express.Router();
 
-router.get("/", getParkingSlots);
-router.post("/", postParkingSlot);
-router.put("/:id/update", putParkingSlot);
-router.delete("/:id", deleteParkingSlot);
+router.get("/parking", getAllParkingSlots);
+router.post("/parking", postParkingSlot);
+router.put("/parking/:id", putParkingSlot);
+router.delete("/parking/:id", deleteParkingSlot);
+router.get("/parking/available", getAvailableParkingSlots);
+router.post("/parking/book", bookParkingSlot)
+router.delete("/parking/slot/:slotId", cancelBooking)
 
 export { router };
