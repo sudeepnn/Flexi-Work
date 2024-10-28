@@ -3,39 +3,66 @@ import User, { IUser } from "../model/user";
 import jwt from 'jsonwebtoken';
 import bcrypt from "bcryptjs";
 
-
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   const { user_id, password, email, name, phone, address, role } = req.body;
 
   const validRoles = ["employee", "vendor", "manager", "security"];
   if (!validRoles.includes(role)) {
     res.status(400).json({ message: "Invalid role" });
-    return; 
+    return;
   }
 
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
   if (!passwordRegex.test(password)) {
-    res.status(400).json({ message: "Password must have at least one lowercase, one uppercase, one number, and be at least 8 characters long." });
-    return; 
+    res.status(400).json({
+      message: "Password must have at least one lowercase, one uppercase, one number, and be at least 8 characters long.",
+    });
+    return;
   }
 
   const phoneRegex = /^\d{10}$/;
   if (!phoneRegex.test(phone)) {
     res.status(400).json({ message: "Phone number must be 10 digits." });
-    return; 
+    return;
   }
 
   try {
+    // Check if user_id already exists
+    const existingUserById = await User.findOne({ user_id });
+    if (existingUserById) {
+      res.status(400).json({ message: "User ID already exists." });
+      return;
+    }
+
+    // Check if email already exists
+    const existingUserByEmail = await User.findOne({ email });
+    if (existingUserByEmail) {
+      res.status(400).json({ message: "Email already exists." });
+      return;
+    }
+
+    // Hash the password before saving the user
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({ user_id, password: hashedPassword, email, name, phone, address, role });
+    
+    // Save the new user to the database
     await user.save();
-    res.status(201).json(user); 
-    return; 
+
+    // Respond with the created user details (excluding the password)
+    res.status(201).json({ 
+      user_id: user.user_id,
+      email: user.email,
+      name: user.name,
+      phone: user.phone,
+      address: user.address,
+      role: user.role 
+    });
+
   } catch (err) {
-    res.status(500).send(err); 
-    return; 
+    res.status(500).json({ message: "Server error. Please try again later." });
   }
 };
+
 
 
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
@@ -65,13 +92,14 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     }
 
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      { userId: user.user_id, role: user.role },
       process.env.JWT_SECRET as string,
       { expiresIn: '1h' }
     );
 
     res.status(200).json({
       message: "Login successful",
+      id:user.user_id,
       token,
       role: user.role // Include the role in the response
     });
