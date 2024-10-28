@@ -1,19 +1,41 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 
-export interface IFeedback extends Document {
-  userId: mongoose.Types.ObjectId;
-  type: string;
-  message: string;
-  response?: string;
-  respondedByAdmin?: boolean;
+// Interface for Response
+interface Response {
+  feedbackId: string; // Reference to the feedback ID
+  message: string; // The response message
+  respondedBy: string; // Admin who responded
+  createdAt: Date; // Timestamp for the response
 }
 
-const FeedbackSchema: Schema = new Schema({
-  userId: { type: String, required: true },
-  type: { type: String, required: true },
-  message: { type: String, required: true },
-  response: { type: String },
-  respondedByAdmin: { type: Boolean, default: false },
+// Interface for Feedback
+interface Feedback {
+  user_id: string; // Reference to the user ID from the user database
+  type: string;
+  message: string;
+  respondedByAdmin?: boolean;
+  responses?: Response[]; // Array of responses
+}
+
+// Schema for Response
+const responseSchema = new Schema<Response>({
+  feedbackId: { type: String, required: true, ref: "Feedback" }, // Reference to the feedback
+  message: { type: String, required: true }, // The response message
+  respondedBy: { type: String, required: true }, // Admin who responded
+  createdAt: { type: Date, default: Date.now }, // Timestamp for the response
 });
 
-export default mongoose.model<IFeedback>("Feedback", FeedbackSchema);
+// Schema for Feedback
+const feedbackSchema = new Schema<Feedback>({
+  user_id: { type: String, required: true }, // Reference to the user ID
+  type: { type: String, required: true, enum: ['praise', 'complaint', 'help', 'others'] }, // Type of feedback
+  message: { type: String, required: true }, // Feedback message
+  respondedByAdmin: { type: Boolean, default: false }, // Indicates if responded by admin
+  responses: [ responseSchema], // Embed the list of responses
+});
+
+// Models
+const FeedbackModel = model<Feedback>("Feedback", feedbackSchema);
+const ResponseModel = model<Response>("Response", responseSchema);
+
+export { FeedbackModel, ResponseModel };

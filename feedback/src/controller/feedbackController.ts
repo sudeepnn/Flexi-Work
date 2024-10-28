@@ -1,21 +1,51 @@
 import { RequestHandler } from 'express';
-import Feedback from "../model/feedback";
+import { FeedbackModel, ResponseModel } from '../model/feedback';
 import {Request, Response} from 'express';
+import axios from 'axios';
 
-export const submitFeedback = async (req:Request, res: Response) : Promise<void> => {
-  const { userId, type, message } = req.body;
+const allowedTypes = ['praise', 'complaint', 'help', 'others']; // Allowed types
+
+export const submitFeedback = async (req: Request, res: Response): Promise<void> => {
+  const { user_id, type, message } = req.body;
+  
   try {
-    const feedback = new Feedback({ userId, type, message });
-    await feedback.save();
-    res.status(201).json(feedback);
+    // Validate feedback type
+    if (!allowedTypes.includes(type)) {
+      res.status(400).json({ error: `Invalid feedback type. Allowed types are: ${allowedTypes.join(', ')}` });
+      return;
+    }
+
+    // Verify if user exists in the user database
+    console.log("Checking user existence with user ID:", user_id);
+    const userResponse = await axios.get(`http://localhost:3001/api/users/${user_id}`);
+    
+    if (userResponse.status === 200 && userResponse.data) {
+      console.log("User verified. Proceeding to save feedback...");
+      
+      // Save the feedback
+      const feedback = new FeedbackModel({ user_id, type, message });
+      const savedFeedback = await feedback.save();
+
+      console.log("Feedback saved successfully:", savedFeedback);
+      res.status(201).json(savedFeedback);
+    } else {
+      console.error("User not found in user service.");
+      res.status(404).json({ error: 'User not found' });
+    }
   } catch (err) {
-    res.status(500).send(err);
+    if (axios.isAxiosError(err) && err.response?.status === 404) {
+      console.error("User not found during Axios request.");
+      res.status(404).json({ error: 'User not found' });
+    } else {
+      console.error("Unexpected error:", err);
+      res.status(500).json({ error: 'An error occurred while submitting feedback' });
+    }
   }
 };
 
 export const getFeedbackByUser = async (req: Request, res: Response) : Promise<void> => {
     try {
-      const feedbacks = await Feedback.find({ userId: req.params.userId });
+      const feedbacks = await FeedbackModel.find({ userId: req.params.userId });
       res.json(feedbacks);
     } catch (err) {
       res.status(500).send("Error fetching feedback by user");
@@ -24,7 +54,7 @@ export const getFeedbackByUser = async (req: Request, res: Response) : Promise<v
 
   export const getFeedbackByType = async (req: Request, res: Response) : Promise<void> => {
     try {
-      const feedbacks = await Feedback.find({ type: req.params.type });
+      const feedbacks = await FeedbackModel.find({ type: req.params.type });
       res.json(feedbacks);
     } catch (err) {
       res.status(500).send("Error fetching feedback by type");
@@ -33,7 +63,7 @@ export const getFeedbackByUser = async (req: Request, res: Response) : Promise<v
 
   export const getAllFeedback = async (req : Request, res: Response) : Promise<void> => {
     try {
-      const feedbacks = await Feedback.find();
+      const feedbacks = await FeedbackModel.find();
       res.json(feedbacks);
     } catch (err) {
       res.status(500).send("Error fetching all feedback");
@@ -42,7 +72,7 @@ export const getFeedbackByUser = async (req: Request, res: Response) : Promise<v
 
   export const getFeedbackById = async (req: Request, res: Response) : Promise<void> => {
     try {
-      const feedback = await Feedback.findById(req.params.feedbackId);
+      const feedback = await FeedbackModel.findById(req.params.feedbackId);
       if (!feedback)  res.status(404).send("Feedback not found");
       res.json(feedback);
     } catch (err) {
@@ -50,4 +80,38 @@ export const getFeedbackByUser = async (req: Request, res: Response) : Promise<v
     }
   };
 
+  export const respondToFeedback = async (req: Request, res: Response): Promise<void> => {
+    const { feedbackId } = req.params;
+    const { message, respondedBy } = req.body;
+  
+    try {
+      // Create a new response and save it
+      const newResponse = new ResponseModel({
+        feedbackId,
+        message,
+        respondedBy,
+      });
+  
+      await newResponse.save();
+  
+      // Update the feedback with the new response
+      const updatedFeedback = await FeedbackModel.findByIdAndUpdate(
+        feedbackId,
+        {
+          $push: { responses: newResponse }, // Add response to the array
+          respondedByAdmin: true,
+        },
+        { new: true }
+      );
+  
+      if (!updatedFeedback) {
+         res.status(404).json({ error: 'Feedback not found' });
+      }
+  
+      res.status(200).json(updatedFeedback);
+    } catch (error) {
+      console.error("Error responding to feedback:", error);
+      res.status(500).json({ error: 'An error occurred while responding to feedback' });
+    }
+  };
   

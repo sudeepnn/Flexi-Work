@@ -4,7 +4,8 @@ import {
   getFeedbackByUser,
   getFeedbackByType,
   getAllFeedback,
-  getFeedbackById
+  getFeedbackById,
+  respondToFeedback
 } from "../controller/feedbackController";
 
 const router = Router();
@@ -14,5 +15,6 @@ router.get("/feedback/user/:userId", getFeedbackByUser);
 router.get("/feedback/type/:type", getFeedbackByType);
 router.get("/feedback", getAllFeedback);
 router.get("/feedback/:feedbackId", getFeedbackById);
+router.post("/feedback/response/:feedbackId", respondToFeedback)
 
 export default router;
