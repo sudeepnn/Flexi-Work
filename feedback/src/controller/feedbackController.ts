@@ -43,14 +43,24 @@ export const submitFeedback = async (req: Request, res: Response): Promise<void>
   }
 };
 
-export const getFeedbackByUser = async (req: Request, res: Response) : Promise<void> => {
-    try {
-      const feedbacks = await FeedbackModel.find({ userId: req.params.userId });
-      res.json(feedbacks);
-    } catch (err) {
-      res.status(500).send("Error fetching feedback by user");
+export const getFeedbackByUser = async (req: Request, res: Response): Promise<void> => {
+  const { userId } = req.params; // Get userId from request parameters
+
+  try {
+    // Fetch feedbacks for the given userId
+    const feedbacks = await FeedbackModel.find({ user_id: userId }); // Make sure to match the field in your schema
+
+    if (feedbacks.length === 0) {
+      res.status(404).json({ message: 'No feedback found for this user' });
+      return;
     }
-  };
+
+    res.status(200).json(feedbacks); // Respond with the feedbacks found
+  } catch (err) {
+    console.error("Error fetching feedback:", err);
+    res.status(500).json({ error: "Error fetching feedback by user" });
+  }
+};
 
   export const getFeedbackByType = async (req: Request, res: Response) : Promise<void> => {
     try {

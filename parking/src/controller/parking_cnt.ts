@@ -109,3 +109,20 @@ export const cancelBooking = async (req: Request, res: Response): Promise<void> 
     }
 };
 
+export const getParkingDetailsByUserId = async (req: Request, res: Response):Promise<void> => {
+    const { userId } = req.params;
+
+    try {
+        const slots = await ParkingSlotModel.find({ 'booking.userId': userId });
+
+        if (!slots.length) {
+            res.status(404).json({ message: "No bookings found for this user" });
+            return;
+        }
+
+        res.status(200).json(slots);
+    } catch (error) {
+        res.status(500).json({ message: "Error retrieving parking details", error });
+    }
+};
+
