@@ -1,5 +1,5 @@
 import express,{Request,Response} from "express";
-import { getAllWorkSpace,postWorkSpace,putWorkSpace,deleteWorkSpace, getWorkspace, bookWorkspace, cancelBooking } from "../controller/workspace_cnt";
+import { getAllWorkSpace,postWorkSpace,putWorkSpace,deleteWorkSpace, getWorkspace, bookWorkspace, cancelBooking, getAllBookings } from "../controller/workspace_cnt";
 
 const router = express.Router();
 
@@ -9,6 +9,7 @@ router.post('/workspace',postWorkSpace)
 router.put('/workspace/:id', putWorkSpace);
 router.delete('/workspace/:id',deleteWorkSpace)
 router.post('/workspace/book', bookWorkspace)
-router.delete('/workspace/:id', cancelBooking)
+router.delete('/workspace/cancel/:bookingId', cancelBooking)
+router.get('/workspaceBook', getAllBookings)
 
 export {router}

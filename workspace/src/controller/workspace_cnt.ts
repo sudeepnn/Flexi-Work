@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import WorkspaceModel from "../model/workspace_model";
 import workspace_booking from "../model/workspace_booking";
 import mongoose from "mongoose";
+import axios from 'axios'
 
 export const getAllWorkSpace = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -65,16 +66,28 @@ export const deleteWorkSpace = async (req: Request, res: Response): Promise<void
   }
 };
 
-export const bookWorkspace = async (req: Request, res: Response) :Promise<void>=> {
-  try {
-    const { workspaceId, userId, Booking_start_time, Booking_end_time } = req.body;
-    const workspaceObjectId = new mongoose.Types.ObjectId(workspaceId);
-    // Check if the workspace is available
-    const workspace = await WorkspaceModel.findById(workspaceId);
-    const userObjectId = new mongoose.Types.ObjectId(userId);
+const USERS_MICROSERVICE_URL ='http://localhost:3001/api/users';
 
-    if(!workspace){
-      res.status(400).json({message: 'workspace is not present'})
+export const bookWorkspace = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { workspace_id, user_id, Booking_start_time, Booking_end_time } = req.body;
+
+    // Step 1: Validate user existence in the users microservice
+    try {
+      const userResponse = await axios.get(`${USERS_MICROSERVICE_URL}/${user_id}`);
+      if (userResponse.status !== 200) {
+        res.status(404).json({ message: 'User not found' });
+        return;
+      }
+    } catch (error) {
+      res.status(404).json({ message: 'User not found in users microservice' });
+      return;
+    }
+
+    // Step 2: Check if the workspace is available
+    const workspace = await WorkspaceModel.findOne({ workspace_id });
+    if (!workspace) {
+      res.status(400).json({ message: 'Workspace is not present' });
       return;
     }
     if (!workspace.availability) {
@@ -82,26 +95,26 @@ export const bookWorkspace = async (req: Request, res: Response) :Promise<void>=
       return;
     }
 
-    // Create a new booking
+    // Step 3: Create a new booking using custom workspace_id and user_id fields
     const booking = new workspace_booking({
-      workspace_id: workspace,
-      user_id: userObjectId,
+      workspace_id,
+      user_id,
       Booking_start_time,
       Booking_end_time,
     });
     await booking.save();
 
-    // Update workspace availability to false
+    // Step 4: Update workspace availability to false
     workspace.availability = false;
     await workspace.save();
 
     res.status(200).json({ message: 'Workspace booked successfully', booking });
   } catch (error) {
-    res.status(500).json(console.log(error))
+    res.status(500).json({ message: 'Error booking workspace', error });
   }
 };
 
-export const cancelBooking = async (req: Request, res: Response) : Promise<void> => {
+export const cancelBooking = async (req: Request, res: Response): Promise<void> => {
   try {
     const { bookingId } = req.params;
 
@@ -113,8 +126,7 @@ export const cancelBooking = async (req: Request, res: Response) : Promise<void>
     }
 
     // Update workspace availability to true
-    
-    const workspace = await WorkspaceModel.findById(booking.workspace_id);
+    const workspace = await WorkspaceModel.findOne({ workspace_id: booking.workspace_id });
     if (workspace) {
       workspace.availability = true;
       await workspace.save();
@@ -122,7 +134,21 @@ export const cancelBooking = async (req: Request, res: Response) : Promise<void>
 
     res.status(200).json({ message: 'Booking canceled and workspace availability updated' });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Error canceling booking', error });
+  }
+};
+
+export const getAllBookings = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Fetch all bookings from the workspace_booking collection
+    const bookings = await workspace_booking.find();
+    
+    // Send the bookings as a response
+    res.status(200).json(bookings);
+  } catch (error) {
+    // Handle any errors that occur during the fetching process
+    res.status(500).json({ message: 'Error fetching bookings', error });
   }
 };
 
