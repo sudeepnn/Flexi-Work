@@ -2,6 +2,8 @@ import { Request, RequestHandler, Response } from "express";
 import User, { IUser } from "../model/user";
 import jwt from 'jsonwebtoken';
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
+import axios from "axios";
 
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   const { user_id, password, email, name, phone, address, role } = req.body;
@@ -149,5 +151,46 @@ export const deleteUser = async (req: Request, res: Response) : Promise<void> =>
   const user = await User.findByIdAndDelete(req.params.id);
   if (!user) res.status(404).send("User not found");
   res.json({ message: "User deleted successfully" });
+};
+
+export const getEmployeeDashboard = async (req: Request, res: Response): Promise<void> => {
+  const { user_id } = req.params; // Get user_id from the request parameters
+
+  try {
+    // Find the user by user_id
+    const user = await User.findOne({ user_id });
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    // Check if user is an employee
+    if (user.role !== "employee") {
+      res.status(403).json({ message: "Access denied: Only employees can view this dashboard" });
+      return;
+    }
+
+    // Use Axios to fetch related information
+    const parkingDetailsPromise = axios.get(`http://localhost:3000/api/parking/${user_id}`);
+    const feedbackDetailsPromise = axios.get(`http://localhost:3002/api/feedback/user/${user_id}`);
+    //const registeredEventsPromise = axios.get(`http://your-events-service-url/api/events/user/${user_id}`);
+
+    // Wait for all requests to complete
+    const [parkingDetailsResponse, feedbackDetailsResponse] = await Promise.all([
+      parkingDetailsPromise,
+      feedbackDetailsPromise,
+      //registeredEventsPromise,
+    ]);
+
+    res.status(200).json({
+      message: "Employee dashboard data retrieved successfully",
+      parkingDetails: parkingDetailsResponse.data,
+      feedbackDetails: feedbackDetailsResponse.data,
+      //registeredEvents: registeredEventsResponse.data,
+    });
+  } catch (err) {
+    console.error("Error retrieving employee dashboard data:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
