@@ -66,11 +66,11 @@ export const deleteWorkSpace = async (req: Request, res: Response): Promise<void
   }
 };
 
-const USERS_MICROSERVICE_URL ='http://localhost:3001/api/users';
+const USERS_MICROSERVICE_URL ='http://localhost:3001/api/v1/users';
 
 export const bookWorkspace = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { workspace_id, user_id, Booking_start_time, Booking_end_time } = req.body;
+    const { workspace_id, user_id, Booking_start_time, project, floor } = req.body;
 
     // Step 1: Validate user existence in the users microservice
     try {
@@ -85,7 +85,7 @@ export const bookWorkspace = async (req: Request, res: Response): Promise<void> 
     }
 
     // Step 2: Check if the workspace is available
-    const workspace = await WorkspaceModel.findOne({ workspace_id });
+    const workspace = await WorkspaceModel.findOne({ workspace_id, floor, project,availability:true});
     if (!workspace) {
       res.status(400).json({ message: 'Workspace is not present' });
       return;
@@ -100,7 +100,8 @@ export const bookWorkspace = async (req: Request, res: Response): Promise<void> 
       workspace_id,
       user_id,
       Booking_start_time,
-      Booking_end_time,
+      project,
+      floor
     });
     await booking.save();
 
@@ -114,7 +115,7 @@ export const bookWorkspace = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-export const cancelBooking = async (req: Request, res: Response): Promise<void> => {
+export const cancelBooking = async (req: Request, res: Response) => {
   try {
     const { bookingId } = req.params;
 
@@ -139,7 +140,7 @@ export const cancelBooking = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-export const getAllBookings = async (req: Request, res: Response): Promise<void> => {
+export const getAllBookings = async (req: Request, res: Response) => {
   try {
     // Fetch all bookings from the workspace_booking collection
     const bookings = await workspace_booking.find();
