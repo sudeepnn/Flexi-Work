@@ -2,14 +2,50 @@ import { Request, Response } from "express";
 import Event from "../model/event";
 import Venue from "../model/venue";
 import eventRegistration from "../model/eventRegistration";
+import axios from "axios";
 
 export const createEvent = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { title, organizer_id, venue_id, date, time, location } = req.body;
-    const event = new Event({ title, organizer_id, venue_id, date, time, location });
+    const { title, organizer_id, venue_id, date, time } = req.body;
+
+    // Check if the organizer exists and has the role 'manager'
+    const userResponse = await axios.get(`http://localhost:3001/api/v1/users/${organizer_id}`);
+    const user = userResponse.data;
+
+    if (!user || user.role !== 'manager') {
+      res.status(403).json({ message: 'Organizer must be a registered manager.' });
+      return;
+    }
+
+    // Check if the venue exists
+    const venue = await Venue.findById(venue_id);
+    if (!venue) {
+       res.status(404).json({ message: 'Venue not found.' });
+       return;
+    }
+
+    // Check if the venue is available for the specified date and time
+    const isVenueAvailable = await Event.findOne({
+      venue_id,
+      date,
+      time,
+    });
+    if (isVenueAvailable) {
+      res.status(400).json({ message: 'Venue is not available for booking at this time.' });
+      return;
+    }
+
+    // Create and save the event if all checks pass
+    const event = new Event({ title, organizer_id, venue_id, date, time });
     await event.save();
     res.status(201).json(event);
+    
   } catch (err) {
+    // Handle Axios error if user service is unavailable
+    if (axios.isAxiosError(err)) {
+      res.status(500).json({ message: 'Error connecting to the user service.' });
+      return;
+    }
     res.status(500).send(err);
   }
 };
