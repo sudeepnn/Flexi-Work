@@ -15,10 +15,15 @@ export const postParkingSlot = async (req: Request, res: Response): Promise<void
     try {
         const parkingSlotData = req.body;
         const newParkingSlot = new ParkingSlotModel(parkingSlotData);
+
         await newParkingSlot.save();
         res.status(201).json(newParkingSlot);
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating parking slot', error });
+    } catch (error: any) {
+        if (error.code === 11000) { // MongoDB duplicate key error code
+            res.status(400).json({ message: 'Slot number already exists. Please use a unique slot number.' });
+        } else {
+            res.status(500).json({ message: 'Error creating parking slot', error });
+        }
     }
 };
 
