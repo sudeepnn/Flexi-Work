@@ -52,12 +52,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 
     // Respond with the created user details (excluding the password)
     res.status(201).json({ 
-      user_id: user.user_id,
-      email: user.email,
-      name: user.name,
-      phone: user.phone,
-      address: user.address,
-      role: user.role 
+      user
     });
 
   } catch (err) {
@@ -190,6 +185,40 @@ export const getEmployeeDashboard = async (req: Request, res: Response): Promise
     });
   } catch (err) {
     console.error("Error retrieving employee dashboard data:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const updateEmployeeDetails = async (req: Request, res: Response): Promise<void> => {
+  const { user_id, isOndcMember, project } = req.body;
+
+  try {
+    // Find the employee by user_id
+    const user = await User.findOne({ user_id });
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    // Confirm that the user has an employee role
+    if (user.role !== "employee") {
+      res.status(403).json({ message: "Access denied: Only employees can update these details" });
+      return;
+    }
+
+    // Update ONDC details, converting ondc string to boolean
+    user.isOndcMember = isOndcMember;
+    if (user.isOndcMember) {
+      user.project = project;
+    } else {
+      user.project = null;  // Clear project if not an ONDC member
+    }
+
+    await user.save();
+
+    res.status(200).json({ message: "Details updated successfully", user });
+  } catch (err) {
+    console.error("Error updating employee details:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 };
