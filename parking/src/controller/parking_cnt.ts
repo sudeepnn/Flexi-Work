@@ -58,7 +58,7 @@ export const getAvailableParkingSlots = async (req: Request, res: Response): Pro
 };
 
 export const bookParkingSlot = async (req: Request, res: Response): Promise<void> => {
-    const {  userId, vehicalnumber, contact, startTime , slot_number} = req.body;
+    const {  userId, name, vehicalnumber, contact, startTime , slot_number} = req.body;
 
     try {
         // Check if the user exists in the user microservice
@@ -82,7 +82,7 @@ export const bookParkingSlot = async (req: Request, res: Response): Promise<void
 
         // Proceed with booking
         slot.available = false; // Mark the slot as not available
-        slot.booking = { userId, vehicalnumber, contact, startTime, slot_number: slot.slot_number }; // Use slot_number
+        slot.booking = { userId, name, vehicalnumber, contact, startTime, slot_number: slot.slot_number }; // Use slot_number
         await slot.save();
 
         res.status(200).json({ message: "Booking successful", slot });

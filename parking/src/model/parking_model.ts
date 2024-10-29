@@ -2,6 +2,7 @@ import mongoose, { Schema, model } from "mongoose";
 
 interface Booking {
     userId: string; // Reference to the user ID from the user database
+    name : string;
     vehicalnumber: string;
     contact: number;
     startTime: Date; // Start time of the booking
@@ -20,6 +21,7 @@ interface ParkingSlot {
 
 const bookingSchema = new Schema<Booking>({
     userId: { type: String, required: true }, // Updated to userId
+    name:{type: String, required: true},
     vehicalnumber: { type: String, required: true },
     contact: { type: Number, required: true },
     startTime: { type: Date, required: true }, // Start time of the booking
@@ -28,7 +30,7 @@ const bookingSchema = new Schema<Booking>({
 });
 
 const parkingSlotSchema = new Schema<ParkingSlot>({
-    slot_number: { type: String, required: true },
+    slot_number: { type: String, required: true , unique: true},
     //location: { type: String, required: true },
     floor: { type: Number, required: true },
     parkingtype: { type: String, required: true, enum: ["4-wheeler", "2-wheeler"] },
