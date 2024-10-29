@@ -7,7 +7,7 @@ const port=3000
 app.use(bodyParser.json());
 
 dbconnection()
-app.use('/api/',router )
+app.use('/api/v1',router )
 app.use(express.json())
 
 app.listen(port,()=>{

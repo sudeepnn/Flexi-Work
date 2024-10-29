@@ -58,11 +58,11 @@ export const getAvailableParkingSlots = async (req: Request, res: Response): Pro
 };
 
 export const bookParkingSlot = async (req: Request, res: Response): Promise<void> => {
-    const { slotId, userId, vehicalnumber, contact, startTime, endTime } = req.body;
+    const {  userId, vehicalnumber, contact, startTime , slot_number} = req.body;
 
     try {
         // Check if the user exists in the user microservice
-        const userResponse = await axios.get(`http://localhost:3001/api/users/${userId}`);
+        const userResponse = await axios.get(`http://localhost:3001/api/v1/users/${userId}`);
         
         if (userResponse.status !== 200) {
             res.status(400).json({ message: "User not found" });
@@ -70,15 +70,19 @@ export const bookParkingSlot = async (req: Request, res: Response): Promise<void
         }
 
         // Check if the parking slot exists and is available
-        const slot = await ParkingSlotModel.findById(slotId);
-        if (!slot || !slot.available) {
-             res.status(400).json({ message: "Slot is not available for booking" });
-             return;
+        const slot = await ParkingSlotModel.findOne({ slot_number }); // Fetch by slot_number
+        if (!slot) {
+            res.status(400).json({ message: "Slot not found" });
+            return;
+        }
+        if (!slot.available) {
+            res.status(400).json({ message: "Slot is not available for booking" });
+            return;
         }
 
         // Proceed with booking
-        slot.available = false;
-        slot.booking = { userId, vehicalnumber, contact, startTime, endTime, slotId };
+        slot.available = false; // Mark the slot as not available
+        slot.booking = { userId, vehicalnumber, contact, startTime, slot_number: slot.slot_number }; // Use slot_number
         await slot.save();
 
         res.status(200).json({ message: "Booking successful", slot });
@@ -86,6 +90,7 @@ export const bookParkingSlot = async (req: Request, res: Response): Promise<void
         res.status(500).json({ message: "Error booking parking slot", error });
     }
 };
+
 
 export const cancelBooking = async (req: Request, res: Response): Promise<void> => {
     const { slotId } = req.params;

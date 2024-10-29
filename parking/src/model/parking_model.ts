@@ -5,14 +5,14 @@ interface Booking {
     vehicalnumber: string;
     contact: number;
     startTime: Date; // Start time of the booking
-    endTime: Date;
-    slotId: string;
+    //endTime: Date;
+    slot_number: string;
 }
 
 interface ParkingSlot {
     slot_number: string;
-    location: string;
-    floor: string;
+    //location: string;
+    floor: number;
     parkingtype: string; // "4wheeler" or "2wheeler"
     available: boolean;
     booking?: Booking;
@@ -23,19 +23,20 @@ const bookingSchema = new Schema<Booking>({
     vehicalnumber: { type: String, required: true },
     contact: { type: Number, required: true },
     startTime: { type: Date, required: true }, // Start time of the booking
-    endTime: { type: Date, required: true },
-    slotId: { type: String, required: true },
+    //endTime: { type: Date, required: true },
+    slot_number: { type: String, required: true },
 });
 
 const parkingSlotSchema = new Schema<ParkingSlot>({
     slot_number: { type: String, required: true },
-    location: { type: String, required: true },
-    floor: { type: String, required: true },
-    parkingtype: { type: String, required: true, enum: ["4wheeler", "2wheeler"] },
+    //location: { type: String, required: true },
+    floor: { type: Number, required: true },
+    parkingtype: { type: String, required: true, enum: ["4-wheeler", "2-wheeler"] },
     available: { type: Boolean,default: true },
     booking: { type: bookingSchema }
 });
 
 const ParkingSlotModel = model<ParkingSlot>("ParkingSlot", parkingSlotSchema);
+const BookingModel = model<Booking>("Booking", bookingSchema);
 
 export default ParkingSlotModel;
