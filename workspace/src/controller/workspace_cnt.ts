@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
 import WorkspaceModel from "../model/workspace_model";
 import workspace_booking from "../model/workspace_booking";
-import mongoose from "mongoose";
+import mongoose, { MongooseError } from "mongoose";
 import axios from 'axios'
+import workspace_model from "../model/workspace_model";
 
 export const getAllWorkSpace = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -27,17 +28,26 @@ export const getWorkspace = async (req: Request, res: Response): Promise<void> =
     }
   };
 
-export const postWorkSpace = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const workspaceData = req.body;
-    const newWorkspace = new WorkspaceModel(workspaceData);
-    await newWorkspace.save();
-    res.status(201).json(newWorkspace);
-  } catch (error) {
-    res.status(500).json({ message: "Error creating workspace", error });
-  }
-};
-
+  export const postWorkSpace = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const workspaceData = req.body;
+      const newWorkspace = new WorkspaceModel(workspaceData);
+      
+      await newWorkspace.save();
+      res.status(201).json(newWorkspace);
+    } catch (error: any) {
+      // Check for duplicate error
+      if (error.code === 11000) {
+        res.status(400).json({ message: 'Duplicate workspace_id. A workspace with this ID already exists.' });
+        return;
+      }
+      
+      // Log unexpected errors
+      console.error(error);
+      res.status(500).json({ message: 'Error creating workspace', error: error.message });
+    }
+  };
+  
 export const putWorkSpace = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -150,6 +160,32 @@ export const getAllBookings = async (req: Request, res: Response) => {
   } catch (error) {
     // Handle any errors that occur during the fetching process
     res.status(500).json({ message: 'Error fetching bookings', error });
+  }
+};
+
+interface ProjectObject {
+  [key: string]: boolean; // Each key will be a string (project name) and the value will be boolean
+}
+
+// Controller to get all unique projects as key-value pairs
+export const getAllProjects = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Use distinct to find unique projects
+    const uniqueProjects: string[] = await workspace_model.distinct('project');
+    console.log(uniqueProjects)
+
+    // Convert the array of unique projects to a key-value pair object
+    const projectsObject: { [key: string]: string } = {};
+
+    uniqueProjects.forEach((project, index) => {
+      projectsObject[`project-${index + 1}`] = project; // Set key as project-{index} and value as project name
+    });
+
+    // Send the unique projects object as a response
+    res.status(200).json(projectsObject);
+  } catch (error) {
+    // Handle any errors that occur during the fetching process
+    res.status(500).json({ message: 'Error fetching unique projects', error });
   }
 };
 
