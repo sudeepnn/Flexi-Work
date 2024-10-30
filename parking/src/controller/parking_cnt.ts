@@ -136,3 +136,22 @@ export const getParkingDetailsByUserId = async (req: Request, res: Response):Pro
     }
 };
 
+export const getAvailableSlotsByFloor = async (req: Request, res: Response): Promise<void> => {
+    const { floor } = req.params;
+
+    try {
+        // Find all available slots on the specified floor
+        const availableSlots = await ParkingSlotModel.find({ 
+            floor: Number(floor), 
+            available: true 
+        });
+
+        if (availableSlots.length === 0) {
+            res.status(404).json({ message: "No available parking slots on this floor." });
+        } else {
+            res.status(200).json(availableSlots);
+        }
+    } catch (error) {
+        res.status(500).json({ message: "Error retrieving parking slots", error });
+    }
+};
