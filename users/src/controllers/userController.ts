@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import axios from "axios";
+import cloudinary from "../config/cloudConfig";
 
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   const { user_id, password, email, name, phone, address, role } = req.body;
@@ -227,4 +228,40 @@ export const updateEmployeeDetails = async (req: Request, res: Response): Promis
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const updateProfileImage = async (req: Request, res: Response): Promise<void> => {
+  const profileImageFile = req.file;
+
+  if (!profileImageFile) {
+    res.status(400).json({ message: 'No image file uploaded' });
+    return;
+  }
+
+  try {
+    // Upload to Cloudinary using buffer
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: 'profile_images', public_id: `user_${req.body.user_id}` },
+        (error, result) => {
+          if (error) {
+            console.error('Error uploading to Cloudinary:', error);
+            return reject(error);
+          }
+          resolve(result);
+        }
+      );
+      stream.end(profileImageFile.buffer);
+    });
+
+    // Get the secure URL from Cloudinary response
+    const profileImageUrl = (result as any).secure_url; // Type assertion for TypeScript
+
+    res.status(200).json({ message: 'Profile image updated successfully', profileImageUrl });
+  } catch (error) {
+    console.error('Error uploading to Cloudinary:', error);
+    res.status(500).json({ message: 'Failed to upload profile image', error });
+  }
+};
+
+
 
