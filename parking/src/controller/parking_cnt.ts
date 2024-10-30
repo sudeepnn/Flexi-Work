@@ -155,3 +155,18 @@ export const getAvailableSlotsByFloor = async (req: Request, res: Response): Pro
         res.status(500).json({ message: "Error retrieving parking slots", error });
     }
 };
+
+export const getAllFloors = async (req: Request, res: Response): Promise<void> => {
+    try {
+        // Get distinct floor numbers from the parking slots
+        const floors = await ParkingSlotModel.distinct("floor");
+
+        if (floors.length === 0) {
+            res.status(404).json({ message: "No floors found." });
+        } else {
+            res.status(200).json(floors);
+        }
+    } catch (error) {
+        res.status(500).json({ message: "Error retrieving floors", error });
+    }
+};

@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllParkingSlots, postParkingSlot, putParkingSlot, deleteParkingSlot, getAvailableParkingSlots, bookParkingSlot, cancelBooking, getParkingDetailsByUserId, getAvailableSlotsByFloor } from "../controller/parking_cnt";
+import { getAllParkingSlots, postParkingSlot, putParkingSlot, deleteParkingSlot, getAvailableParkingSlots, bookParkingSlot, cancelBooking, getParkingDetailsByUserId, getAvailableSlotsByFloor, getAllFloors } from "../controller/parking_cnt";
 import route from '../../../events/src/routes/eventRoutes';
 
 const router = express.Router();
@@ -13,5 +13,6 @@ router.post("/parking/book", bookParkingSlot)
 router.get("/parking/:userId", getParkingDetailsByUserId)
 router.delete("/parking/slot/:slotId", cancelBooking)
 router.get("/parking/floor/:floor", getAvailableSlotsByFloor)
+router.get("/parkingFloors", getAllFloors)
 
 export { router };
