@@ -10,6 +10,7 @@ export interface IUser extends Document {
   role: string;
   isOndcMember?: boolean;
   project?: string|null;
+  manager?: string|null
 }
 
 const UserSchema: Schema = new Schema({
@@ -21,7 +22,8 @@ const UserSchema: Schema = new Schema({
   address: { type: String, required: true },
   role: { type: String, required: true },
   isOndcMember: { type: Boolean, default: false },
-  project: { type: String, default: null }
+  project: { type: String, default: null },
+  manager :{type: String, default: null}
 });
 
 export default mongoose.model<IUser>('User', UserSchema);
