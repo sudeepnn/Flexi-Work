@@ -190,7 +190,7 @@ export const getEmployeeDashboard = async (req: Request, res: Response): Promise
 };
 
 export const updateEmployeeDetails = async (req: Request, res: Response): Promise<void> => {
-  const { user_id, isOndcMember, project, manager, profileImage} = req.body;
+  const { user_id, isOndcMember, project, manager, profileImage, address, phone} = req.body;
 
   try {
     // Find the employee by user_id
@@ -207,6 +207,8 @@ export const updateEmployeeDetails = async (req: Request, res: Response): Promis
     }
 
     // Update ONDC details, converting ondc string to boolean
+    user.address = address;
+    user.phone=phone
     user.profileImage = profileImage;
     user.isOndcMember = isOndcMember;
     if (user.isOndcMember) {
