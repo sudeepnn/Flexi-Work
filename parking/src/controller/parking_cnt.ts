@@ -17,7 +17,7 @@ export const postParkingSlot = async (req: Request, res: Response): Promise<void
         const newParkingSlot = new ParkingSlotModel(parkingSlotData);
 
         await newParkingSlot.save();
-        res.status(201).json(newParkingSlot);
+        res.status(201).json({newParkingSlot, message: 'Added successfully'});
     } catch (error: any) {
         if (error.code === 11000) { // MongoDB duplicate key error code
             res.status(400).json({ message: 'Slot number already exists. Please use a unique slot number.' });
@@ -138,16 +138,20 @@ export const getParkingDetailsByUserId = async (req: Request, res: Response):Pro
 
 export const getAvailableSlotsByFloor = async (req: Request, res: Response): Promise<void> => {
     const { floor } = req.params;
+    const { parkingtype } = req.query;
 
     try {
-        // Find all available slots on the specified floor
-        const availableSlots = await ParkingSlotModel.find({ 
-            floor: Number(floor), 
-            available: true 
-        });
+        // Find all available slots on the specified floor and vehicle type
+        const query = {
+            floor: Number(floor),
+            available: true,
+            ...( parkingtype && { parkingtype }) // Only include vehicleType if it's provided
+        };
+
+        const availableSlots = await ParkingSlotModel.find(query);
 
         if (availableSlots.length === 0) {
-            res.status(404).json({ message: "No available parking slots on this floor." });
+            res.status(404).json({ message: "No available parking slots on this floor for the specified vehicle type." });
         } else {
             res.status(200).json(availableSlots);
         }
@@ -156,17 +160,20 @@ export const getAvailableSlotsByFloor = async (req: Request, res: Response): Pro
     }
 };
 
+
 export const getAllFloors = async (req: Request, res: Response): Promise<void> => {
     try {
-        // Get distinct floor numbers from the parking slots
-        const floors = await ParkingSlotModel.distinct("floor");
+        // Get distinct floor numbers from the parking slots where status is true
+        const floors = await ParkingSlotModel.distinct("floor", { available: true });
 
         if (floors.length === 0) {
             res.status(404).json({ message: "No floors found." });
         } else {
-            res.status(200).json(floors);
+            const floorList = floors.map((floor) => ({ floor }));
+            res.status(200).json(floorList);
         }
     } catch (error) {
         res.status(500).json({ message: "Error retrieving floors", error });
     }
 };
+

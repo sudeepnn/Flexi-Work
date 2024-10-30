@@ -2,10 +2,11 @@ import express from "express";
 import { router } from "./routes/routes";
 import dbconnection from "./config/db";
 import bodyParser from "body-parser";
+import cors from 'cors'
 const app = express();
 const port=3005
 app.use(bodyParser.json());
-
+app.use(cors())
 dbconnection()
 app.use('/api/v1',router )
 app.use(express.json())

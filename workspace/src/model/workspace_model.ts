@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IWorkspace extends Document {
-  workspace_id : number
+  workspace_id : string
   project: string;
   floor: number;
   //location: string;
@@ -9,7 +9,7 @@ export interface IWorkspace extends Document {
 }
 
 const WorkspaceSchema: Schema<IWorkspace> = new Schema({
-  workspace_id : {type: Number, required: true, unique: true},
+  workspace_id : {type: String, required: true, unique: true},
   project: { type: String, required: true },
   floor: { type: Number, required: true },
   //location: { type: String, required: true },
