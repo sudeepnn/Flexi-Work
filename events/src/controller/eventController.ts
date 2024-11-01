@@ -205,3 +205,21 @@ export const registerForEvent = async (req: Request, res: Response): Promise<voi
     }
   };
   
+  export const getUserRegistrations = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { user_id } = req.params;
+  
+      // Find all registrations for the user
+      const registrations = await eventRegistration.find({ user_id }).populate('event_name');
+  
+      if (registrations.length === 0) {
+        res.status(404).json({ message: 'No registrations found for this user.' });
+        return
+      }
+  
+      // Respond with the registration details
+      res.status(200).json(registrations);
+    } catch (err) {
+      res.status(500).send({message: "Error retrieving user registrations",err});
+    }
+  };

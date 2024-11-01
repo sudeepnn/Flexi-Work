@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addVenue, cancelEvent, cancelEventRegistration, createEvent, getAllEvents, getAllVenues, getEventAttendees, registerForEvent, updateEvent, updateVenueAvailability } from "../controller/eventController";
+import { addVenue, cancelEvent, cancelEventRegistration, createEvent, getAllEvents, getAllVenues, getEventAttendees, getUserRegistrations, registerForEvent, updateEvent, updateVenueAvailability } from "../controller/eventController";
 
 const route = Router();
 
@@ -13,5 +13,6 @@ route.post('/venue', addVenue)
 route.get('/venue', getAllVenues)
 route.put('/venue/:id', updateVenueAvailability)
 route.delete('/event/cancel/:event_name/:user_id', cancelEventRegistration)
+route.get('/event/registered/:user_id', getUserRegistrations)
 
 export default route;
