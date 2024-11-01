@@ -80,7 +80,7 @@ const USERS_MICROSERVICE_URL ='http://localhost:3001/api/v1/users';
 
 export const bookWorkspace = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { workspace_id, user_id, Booking_start_time, project, floor } = req.body;
+    const { workspace_id, user_id,name, Booking_start_time, project, floor } = req.body;
 
     // Step 1: Validate user existence in the users microservice
     try {
@@ -95,20 +95,17 @@ export const bookWorkspace = async (req: Request, res: Response): Promise<void> 
     }
 
     // Step 2: Check if the workspace is available
-    const workspace = await WorkspaceModel.findOne({ workspace_id, floor, project,availability:true});
+    const workspace = await WorkspaceModel.findOne({ workspace_id, floor, project, availability: true });
     if (!workspace) {
-      res.status(400).json({ message: 'Workspace is not present' });
-      return;
-    }
-    if (!workspace.availability) {
       res.status(400).json({ message: 'Workspace is not available for booking' });
       return;
     }
 
-    // Step 3: Create a new booking using custom workspace_id and user_id fields
+    // Step 3: Create a new booking
     const booking = new workspace_booking({
       workspace_id,
       user_id,
+      name,
       Booking_start_time,
       project,
       floor
@@ -121,9 +118,12 @@ export const bookWorkspace = async (req: Request, res: Response): Promise<void> 
 
     res.status(200).json({ message: 'Workspace booked successfully', booking });
   } catch (error) {
+    console.error("Error booking workspace:", error);
     res.status(500).json({ message: 'Error booking workspace', error });
   }
 };
+
+
 
 export const cancelBooking = async (req: Request, res: Response) => {
   try {
@@ -189,3 +189,54 @@ export const getAllProjects = async (req: Request, res: Response): Promise<void>
   }
 };
 
+export const getFloorByProject = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { project } = req.params;
+
+    // Find the workspace based on the project
+    const workspace = await WorkspaceModel.findOne({ project });
+
+    // If workspace is not found, return a 404 response
+    if (!workspace) {
+      res.status(404).json({ message: 'Workspace with this project not found' });
+      return;
+    }
+
+    // Send only the floor as a response
+    res.status(200).json({ floor: workspace.floor });
+  } catch (error) {
+    // Handle any errors that occur during the fetching process
+    res.status(500).json({ message: 'Error retrieving floor for the project', error });
+  }
+};
+
+export const getAvailableWorkspaces = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { project, floor } = req.params;
+
+    // Validate query parameters
+    if (!project || !floor) {
+      res.status(400).json({ message: 'Project and floor are required query parameters' });
+      return;
+    }
+
+    // Find available workspaces matching the specified project and floor
+    const workspaces = await WorkspaceModel.find({
+      project: project as string,
+      floor: Number(floor),
+      availability: true
+    });
+
+    // If no workspaces are found, return an empty list
+    if (!workspaces.length) {
+      res.status(404).json({ message: 'No available workspaces found for the specified project and floor' });
+      return;
+    }
+
+    // Send the list of available workspaces as a response
+    res.status(200).json(workspaces);
+  } catch (error) {
+    // Handle any errors that occur during the fetching process
+    res.status(500).json({ message: 'Error retrieving available workspaces', error });
+  }
+};
