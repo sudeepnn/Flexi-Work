@@ -167,6 +167,46 @@ export const registerForEvent = async (req: Request, res: Response): Promise<voi
       res.status(500).send("Error retrieving venues");
     }
   };
+
+  export const updateVenue = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const { venue_name, capacity, isAvailable } = req.body;
+  
+      const updatedVenue = await Venue.findByIdAndUpdate(
+        id,
+        { venue_name, capacity, isAvailable },
+        { new: true, runValidators: true }
+      );
+  
+      if (!updatedVenue) {
+        res.status(404).send("Venue not found");
+        return;
+      }
+  
+      res.json(updatedVenue);
+    } catch (err) {
+      res.status(500).send("Error updating venue");
+    }
+  }
+
+  export const deleteVenue = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+  
+      const deletedVenue = await Venue.findByIdAndDelete(id);
+  
+      if (!deletedVenue) {
+        res.status(404).send("Venue not found");
+        return;
+      }
+  
+      res.status(200).json({ message: "Venue deleted successfully" });
+    } catch (err) {
+      res.status(500).send("Error deleting venue");
+    }
+  };
+  
   
   // Update venue availability status
   export const updateVenueAvailability = async (req: Request, res: Response) : Promise<void>=> {
