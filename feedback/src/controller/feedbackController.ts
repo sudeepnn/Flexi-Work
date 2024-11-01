@@ -17,7 +17,7 @@ export const submitFeedback = async (req: Request, res: Response): Promise<void>
 
     // Verify if user exists in the user database
     console.log("Checking user existence with user ID:", user_id);
-    const userResponse = await axios.get(`http://localhost:3001/api/users/${user_id}`);
+    const userResponse = await axios.get(`http://localhost:3001/api/v1/users/${user_id}`);
     
     if (userResponse.status === 200 && userResponse.data) {
       console.log("User verified. Proceeding to save feedback...");

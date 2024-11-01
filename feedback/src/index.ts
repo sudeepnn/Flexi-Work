@@ -9,7 +9,7 @@ const PORT = 3002;
 
 dbConnection();
 
-app.use('/api',routes)
+app.use('/api/v1',routes)
 
 app.listen(PORT , () => {
     console.log(`Server running on port ${PORT}`);
