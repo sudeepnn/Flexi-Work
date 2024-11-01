@@ -20,7 +20,7 @@ export const postParkingSlot = async (req: Request, res: Response): Promise<void
         res.status(201).json({newParkingSlot, message: 'Added successfully'});
     } catch (error: any) {
         if (error.code === 11000) { // MongoDB duplicate key error code
-            res.status(400).json({ message: 'Slot number already exists. Please use a unique slot number.' });
+            res.status(400).json({ message: 'Slot number already exists in the block. Please use a unique slot number.' });
         } else {
             res.status(500).json({ message: 'Error creating parking slot', error });
         }
@@ -177,3 +177,25 @@ export const getAllFloors = async (req: Request, res: Response): Promise<void> =
     }
 };
 
+export const getUniqueFloorsByArea = async (req: Request, res: Response): Promise<void> => {
+    const area = req.params.area;
+
+    try {
+        // Find all parking slots that match the specified area
+        const slots = await ParkingSlotModel.find({ area });
+
+        // Extract unique floors from the slots
+        const uniqueFloors = Array.from(new Set(slots.map(slot => slot.floor)));
+
+        // Create key-value pairs for the unique floors
+        const floorPairs = uniqueFloors.reduce((acc, floor) => {
+            acc[`floor_${floor}`] = floor; // You can customize the key format as needed
+            return acc;
+        }, {} as Record<string, string>);
+
+        // Respond with the unique floors in key-value pair format
+        res.status(200).json({ area, floors: floorPairs });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching floors', error });
+    }
+};

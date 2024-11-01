@@ -11,9 +11,11 @@ interface Booking {
 }
 
 interface ParkingSlot {
+    area: string;
+    block : string;
     slot_number: string;
-    //location: string;
-    floor: number;
+    floor: string;
+    direction: string;
     parkingtype: string; // "4wheeler" or "2wheeler"
     available: boolean;
     booking?: Booking;
@@ -30,14 +32,16 @@ const bookingSchema = new Schema<Booking>({
 });
 
 const parkingSlotSchema = new Schema<ParkingSlot>({
-    slot_number: { type: String, required: true , unique: true},
-    //location: { type: String, required: true },
-    floor: { type: Number, required: true },
+    area: {type: String, required: true, enum: ["MLCP", "Front-Gate"]},
+    block: {type: String, required:true},
+    slot_number: { type: String, required: true },
+    floor: { type: String, required: true },
+    direction: {type: String, required:true},
     parkingtype: { type: String, required: true, enum: ["4-wheeler", "2-wheeler"] },
     available: { type: Boolean,default: true },
     booking: { type: bookingSchema }
 });
-
+//parkingSlotSchema.index({ block: 1, slot_number: 1 }, { unique: true });
 const ParkingSlotModel = model<ParkingSlot>("ParkingSlot", parkingSlotSchema);
 const BookingModel = model<Booking>("Booking", bookingSchema);
 
