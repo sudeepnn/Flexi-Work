@@ -51,7 +51,7 @@ export const getWorkspace = async (req: Request, res: Response): Promise<void> =
 export const putWorkSpace = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const updatedWorkspace = await WorkspaceModel.findByIdAndUpdate(id, req.body, { new: true });
+    const updatedWorkspace = await WorkspaceModel.findOneAndUpdate({workspace_id:id}, req.body, { new: true });
     if (!updatedWorkspace) {
       res.status(404).json({ message: "Workspace not found" });
       return;
@@ -65,7 +65,7 @@ export const putWorkSpace = async (req: Request, res: Response): Promise<void> =
 export const deleteWorkSpace = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const deletedWorkspace = await WorkspaceModel.findByIdAndDelete(id);
+    const deletedWorkspace = await WorkspaceModel.findOneAndDelete({workspace_id:id});
     if (!deletedWorkspace) {
       res.status(404).json({ message: "Workspace not found" });
       return;
@@ -80,7 +80,9 @@ const USERS_MICROSERVICE_URL ='http://localhost:3001/api/v1/users';
 
 export const bookWorkspace = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { workspace_id, user_id,name, Booking_start_time, project, floor } = req.body;
+
+    const { workspace_id, user_id, Booking_start_time, project,name, floor } = req.body;
+
 
     // Step 1: Validate user existence in the users microservice
     try {
@@ -108,6 +110,7 @@ export const bookWorkspace = async (req: Request, res: Response): Promise<void> 
       name,
       Booking_start_time,
       project,
+      
       floor
     });
     await booking.save();
@@ -160,6 +163,20 @@ export const getAllBookings = async (req: Request, res: Response) => {
   } catch (error) {
     // Handle any errors that occur during the fetching process
     res.status(500).json({ message: 'Error fetching bookings', error });
+  }
+};
+
+export const getABooking = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const workspace = await workspace_booking.findOne({workspace_id:id});
+    if (!workspace) {
+      res.status(404).json({ message: "Workspacebooking not found" });
+      return;
+    }
+    res.json(workspace);
+  } catch (error) {
+    res.status(500).json({ message: "Error retrieving Workspacebooking", error });
   }
 };
 

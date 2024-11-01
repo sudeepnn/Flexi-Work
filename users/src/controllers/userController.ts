@@ -57,7 +57,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     });
 
   } catch (err) {
-    res.status(500).json({ message: "Server error. Please try again later." });
+    res.status(500).json({ message: "Server error. Please try again later.",err });
   }
 };
 
@@ -113,6 +113,14 @@ export const getAllUsers = async (_: Request, res: Response) : Promise<void> => 
     res.json(users);
   } catch (err) {
     res.status(500).send("Error fetching users");
+  }
+};
+export const getEmployees = async (_: Request, res: Response): Promise<void> => {
+  try {
+    const employees = await User.find({ role: "employee" });
+    res.json(employees);
+  } catch (err) {
+    res.status(500).send("Error fetching employees");
   }
 };
 

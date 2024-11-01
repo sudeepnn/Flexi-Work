@@ -22,7 +22,7 @@ const UserSchema: Schema = new Schema({
   phone: { type: Number, required: true },
   address: { type: String, required: true },
   role: { type: String, required: true },
-  profileImage: {type: String, required: true},
+  profileImage: {type: String},
   isOndcMember: { type: Boolean, default: false },
   project: { type: String, default: null },
   manager :{type: String, default: null}

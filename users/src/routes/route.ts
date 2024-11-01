@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { deleteUser, getAllUsers, getEmployeeDashboard, getUserById, loginUser, registerUser, updateEmployeeDetails, updateProfileImage, updateUser } from "../controllers/userController";
+import { deleteUser, getAllUsers, getEmployeeDashboard, getEmployees, getUserById, loginUser, registerUser, updateEmployeeDetails, updateProfileImage, updateUser } from "../controllers/userController";
 import { upload } from "../multer/multerConfig";
 
 
@@ -9,6 +9,7 @@ router.post("/users/register", registerUser);
 router.post("/users/login", loginUser)
 router.get("/users", getAllUsers);
 router.get("/users/:user_id", getUserById);
+router.get('/usersemp/', getEmployees);
 router.put("/users/:id", updateUser);
 router.delete("/users/:id", deleteUser);
 router.put("/user/update-user", updateEmployeeDetails)
