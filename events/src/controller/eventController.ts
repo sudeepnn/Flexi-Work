@@ -6,7 +6,7 @@ import axios from "axios";
 
 export const createEvent = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { title, organizer_id, venue_id, date, time } = req.body;
+    const { event_name, organizer_id, venue_id, date, time } = req.body;
 
     // Check if the organizer exists and has the role 'manager'
     const userResponse = await axios.get(`http://localhost:3001/api/v1/users/${organizer_id}`);
@@ -36,7 +36,7 @@ export const createEvent = async (req: Request, res: Response): Promise<void> =>
     }
 
     // Create and save the event if all checks pass
-    const event = new Event({ title, organizer_id, venue_id, date, time });
+    const event = new Event({ event_name, organizer_id, venue_id, date, time });
     await event.save();
     res.status(201).json(event);
     
@@ -60,16 +60,46 @@ export const getAllEvents = async (_req: Request, res: Response): Promise<void> 
   }
 };
 
-export const registerForEvent = async (req: Request, res: Response) : Promise<void> => {
-    try {
-      const { event_id, user_id } = req.body;
-      const registration = new eventRegistration({ event_id, user_id });
-      await registration.save();
-      res.status(201).json(registration);
-    } catch (err) {
-      res.status(500).send("Error registering for event");
+export const registerForEvent = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { event_name, user_id } = req.body;
+
+    // Check if the user exists
+    const userResponse = await axios.get(`http://localhost:3001/api/v1/users/${user_id}`);
+    const user = userResponse.data;
+
+    if (!user) {
+      res.status(404).json({ message: 'User not found.' });
+      return;
     }
-  };
+
+    // Check if the event exists by event name
+    const event = await Event.findOne({  event_name });
+    if (!event) {
+      res.status(404).json({ message: 'Event not found.' });
+      return 
+    }
+
+    // Check if the user is already registered for the event
+    const existingRegistration = await eventRegistration.findOne({ event_name, user_id });
+    if (existingRegistration) {
+      res.status(400).json({ message: 'User is already registered for this event.' });
+      return 
+    }
+
+    // Create and save the registration if no duplicate exists
+    const registration = new eventRegistration({ event_name, user_id });
+    await registration.save();
+    res.status(201).json(registration);
+    
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      res.status(500).json({ message: 'Error connecting to the user service.' });
+      return 
+    }
+    res.status(500).send("Error registering for event");
+  }
+};
 
   export const updateEvent = async (req: Request, res: Response) :Promise<void> => {
     try {
@@ -94,16 +124,27 @@ export const registerForEvent = async (req: Request, res: Response) : Promise<vo
     }
   };
 
-  export const getEventAttendees = async (req: Request, res: Response) :Promise<void>=> {
+  export const getEventAttendees = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
-      const attendees = await eventRegistration.find({ event_id: id }).populate("user_id", "name email");
+      const { event_name } = req.params;
+  
+      // Find the event by name
+      const event = await Event.findOne({ event_name });
+      if (!event) {
+        res.status(404).json({ message: 'Event not found.' });
+        return;
+      }
+  
+      // Find all registrations for the event and populate only the name of each user
+      const attendees = await eventRegistration.find({ event_name }).populate("user_id", "name");
+  
       res.json(attendees);
     } catch (err) {
       res.status(500).send("Error retrieving event attendees");
     }
   };
 
+  
   export const addVenue = async (req: Request, res: Response) :Promise<void> => {
     try {
       const { venue_name, capacity, isAvailable } = req.body;
@@ -137,6 +178,30 @@ export const registerForEvent = async (req: Request, res: Response) : Promise<vo
       res.json(venue);
     } catch (err) {
       res.status(500).send("Error updating venue availability");
+    }
+  };
+
+  export const cancelEventRegistration = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { event_name, user_id } = req.params;
+  
+      // Find the event by name
+      const event = await Event.findOne({ event_name });
+      if (!event) {
+        res.status(404).json({ message: 'Event not found.' });
+        return 
+      }
+  
+      // Find and delete the registration
+      const registration = await eventRegistration.findOneAndDelete({ event_name, user_id });
+      if (!registration) {
+        res.status(404).json({ message: 'Registration not found for the specified event and user.' });
+        return 
+      }
+  
+      res.status(200).json({ message: 'Registration canceled successfully.' });
+    } catch (err) {
+      res.status(500).send("Error canceling registration");
     }
   };
   
