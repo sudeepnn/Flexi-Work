@@ -11,7 +11,7 @@ router.delete("/parking/:id", deleteParkingSlot);
 router.get("/parking/available", getAvailableParkingSlots);
 router.post("/parking/book", bookParkingSlot)
 router.get("/parking/:userId", getParkingDetailsByUserId)
-router.delete("/parking/slot/:slotId", cancelBooking)
+router.delete("/parking/slot/:slot_number", cancelBooking)
 router.get("/parking/floor/:floor", getAvailableSlotsByFloor)
 router.get("/parkingFloors", getAllFloors)
 router.get("/parkingFloor/:area", getUniqueFloorsByArea)
