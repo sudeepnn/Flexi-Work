@@ -168,8 +168,8 @@ export const getAllBookings = async (req: Request, res: Response) => {
 
 export const getABooking = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-    const workspace = await workspace_booking.findOne({workspace_id:id});
+    const { user_id } = req.params;
+    const workspace = await workspace_booking.findOne({user_id});
     if (!workspace) {
       res.status(404).json({ message: "Workspacebooking not found" });
       return;
