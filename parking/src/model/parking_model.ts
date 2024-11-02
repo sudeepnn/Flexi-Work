@@ -7,7 +7,7 @@ interface Booking {
     contact: number;
     startTime: Date; // Start time of the booking
     //endTime: Date;
-    slot_number: string;
+    _id: string;
 }
 
 interface ParkingSlot {
@@ -28,7 +28,7 @@ const bookingSchema = new Schema<Booking>({
     contact: { type: Number, required: true },
     startTime: { type: Date, required: true }, // Start time of the booking
     //endTime: { type: Date, required: true },
-    slot_number: { type: String, required: true },
+    _id: { type: String, required: true },
 });
 
 const parkingSlotSchema = new Schema<ParkingSlot>({

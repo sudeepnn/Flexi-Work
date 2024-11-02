@@ -63,7 +63,7 @@ export const getAvailableParkingSlots = async (req: Request, res: Response): Pro
 };
 
 export const bookParkingSlot = async (req: Request, res: Response): Promise<void> => {
-    const {  userId, name, vehicalnumber, contact, startTime , slot_number} = req.body;
+    const {  userId, name, vehicalnumber, contact, startTime , _id} = req.body;
 
     try {
         // Check if the user exists in the user microservice
@@ -75,7 +75,7 @@ export const bookParkingSlot = async (req: Request, res: Response): Promise<void
         }
 
         // Check if the parking slot exists and is available
-        const slot = await ParkingSlotModel.findOne({ slot_number }); // Fetch by slot_number
+        const slot = await ParkingSlotModel.findById({ _id }); // Fetch by slot_number
         if (!slot) {
             res.status(400).json({ message: "Slot not found" });
             return;
@@ -87,7 +87,7 @@ export const bookParkingSlot = async (req: Request, res: Response): Promise<void
 
         // Proceed with booking
         slot.available = false; // Mark the slot as not available
-        slot.booking = { userId, name, vehicalnumber, contact, startTime, slot_number: slot.slot_number }; // Use slot_number
+        slot.booking = { userId, name, vehicalnumber, contact, startTime, _id }; // Use slot_number
         await slot.save();
 
         res.status(200).json({ message: "Booking successful", slot });
@@ -126,6 +126,23 @@ export const getParkingDetailsByUserId = async (req: Request, res: Response):Pro
         const slots = await ParkingSlotModel.find({ 'booking.userId': userId });
 
         if (!slots.length) {
+            res.status(404).json({ message: "No bookings found for this user" });
+            return;
+        }
+
+        res.status(200).json(slots);
+    } catch (error) {
+        res.status(500).json({ message: "Error retrieving parking details", error });
+    }
+};
+
+export const getParkingDetailsByslotid = async (req: Request, res: Response):Promise<void> => {
+    const { id } = req.params;
+
+    try {
+        const slots = await ParkingSlotModel.findById(id);
+
+        if (!slots) {
             res.status(404).json({ message: "No bookings found for this user" });
             return;
         }
