@@ -12,7 +12,7 @@ router.get("/parking/available", getAvailableParkingSlots);
 router.post("/parking/book", bookParkingSlot)
 router.get("/parking/:userId", getParkingDetailsByUserId)
 
-router.delete("/parking/slot/:slot_number", cancelBooking)
+router.delete("/parking/slot/:id", cancelBooking)
 
 router.get("/parkingslotdetails/:id", getParkingDetailsByslotid)
 

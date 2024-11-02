@@ -98,11 +98,11 @@ export const bookParkingSlot = async (req: Request, res: Response): Promise<void
 
 
 export const cancelBooking = async (req: Request, res: Response): Promise<void> => {
-    const { slot_number } = req.params;
+    const { id } = req.params;
 
     try {
         // Find the parking slot by ID
-        const slot = await ParkingSlotModel.findOne({slot_number});
+        const slot = await ParkingSlotModel.findById(id);
         if (!slot || !slot.booking) {
              res.status(404).json({ message: "Booking not found for this slot" });
              return;
