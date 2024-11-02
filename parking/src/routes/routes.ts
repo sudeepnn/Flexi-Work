@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllParkingSlots, putParkingSlot, deleteParkingSlot, getAvailableParkingSlots, bookParkingSlot, cancelBooking, getParkingDetailsByUserId, getAvailableSlotsByFloor, getAllFloors, postParkingSlot, getUniqueFloorsByArea, getAvailableBlocksByFloorAndArea, getSlotsByAreaFloorBlock, getBlocksByAreaFloorType, getSlotsByCriteria } from "../controller/parking_cnt";
+import { getAllParkingSlots, putParkingSlot, deleteParkingSlot, getAvailableParkingSlots, bookParkingSlot, cancelBooking, getParkingDetailsByUserId, getAvailableSlotsByFloor, getAllFloors, postParkingSlot, getUniqueFloorsByArea, getAvailableBlocksByFloorAndArea, getSlotsByAreaFloorBlock, getBlocksByAreaFloorType, getSlotsByCriteria, getParkingDetailsByslotid } from "../controller/parking_cnt";
 import route from '../../../events/src/routes/eventRoutes';
 
 const router = express.Router();
@@ -11,7 +11,11 @@ router.delete("/parking/:id", deleteParkingSlot);
 router.get("/parking/available", getAvailableParkingSlots);
 router.post("/parking/book", bookParkingSlot)
 router.get("/parking/:userId", getParkingDetailsByUserId)
+
 router.delete("/parking/slot/:slot_number", cancelBooking)
+
+router.get("/parkingslotdetails/:id", getParkingDetailsByslotid)
+
 router.get("/parking/floor/:floor", getAvailableSlotsByFloor)
 router.get("/parkingFloors", getAllFloors)
 router.get("/parkingFloor/:area", getUniqueFloorsByArea)
