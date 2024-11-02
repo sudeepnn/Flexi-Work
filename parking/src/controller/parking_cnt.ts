@@ -187,14 +187,8 @@ export const getUniqueFloorsByArea = async (req: Request, res: Response): Promis
         // Extract unique floors from the slots
         const uniqueFloors = Array.from(new Set(slots.map(slot => slot.floor)));
 
-        // Create key-value pairs for the unique floors
-        const floorPairs = uniqueFloors.reduce((acc, floor) => {
-            acc[`floor_${floor}`] = floor; // You can customize the key format as needed
-            return acc;
-        }, {} as Record<string, string>);
-
-        // Respond with the unique floors in key-value pair format
-        res.status(200).json({ area, floors: floorPairs });
+        // Respond with the unique floors
+        res.status(200).json({ area, floors: uniqueFloors });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching floors', error });
     }
