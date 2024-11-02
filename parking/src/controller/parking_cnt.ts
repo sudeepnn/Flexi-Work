@@ -216,3 +216,23 @@ export const getAvailableBlocksByFloorAndArea = async (req: Request, res: Respon
         res.status(500).json({ message: 'Error fetching available blocks', error });
     }
 };
+
+export const getSlotsByAreaFloorBlock = async (req: Request, res: Response): Promise<void> => {
+    const { area, floor, block } = req.params;
+
+    try {
+        // Find all parking slots that match the specified area, floor, and block
+        const slots = await ParkingSlotModel.find({ area, floor, block });
+
+        // Check if any slots are found
+        if (slots.length === 0) {
+            res.status(404).json({ message: 'No parking slots found for the specified criteria' });
+            return;
+        }
+
+        // Respond with the list of parking slots
+        res.status(200).json({ area, floor, block, slots });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching parking slots', error });
+    }
+};
