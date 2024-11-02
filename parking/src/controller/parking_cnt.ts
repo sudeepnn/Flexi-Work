@@ -236,3 +236,52 @@ export const getSlotsByAreaFloorBlock = async (req: Request, res: Response): Pro
         res.status(500).json({ message: 'Error fetching parking slots', error });
     }
 };
+
+export const getBlocksByAreaFloorType = async (req: Request, res: Response): Promise<void> => {
+    const { area, floor, parkingtype } = req.params;
+
+    try {
+        // Query to find all distinct blocks that match the criteria
+        const blocks = await ParkingSlotModel.distinct("block", {
+            area,
+            floor,
+            parkingtype,
+        });
+
+        // Check if any blocks are found
+        if (blocks.length === 0) {
+            res.status(404).json({ message: 'No blocks found for the specified criteria' });
+            return;
+        }
+
+        // Respond with the list of blocks
+        res.status(200).json({ area, floor, parkingtype, blocks });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching blocks', error });
+    }
+};
+
+export const getSlotsByCriteria = async (req: Request, res: Response): Promise<void> => {
+    const { area, floor, parkingtype, block } = req.params;
+
+    try {
+        // Query to find all slots that match the specified criteria
+        const slots = await ParkingSlotModel.find({
+            area,
+            floor,
+            parkingtype,
+            block,
+        });
+
+        // Check if any slots are found
+        if (slots.length === 0) {
+            res.status(404).json({ message: 'No slots found for the specified criteria' });
+            return;
+        }
+
+        // Respond with the list of slots
+        res.status(200).json({ area, floor, parkingtype, block, slots });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching slots', error });
+    }
+};

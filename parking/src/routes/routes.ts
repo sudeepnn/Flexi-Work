@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllParkingSlots, putParkingSlot, deleteParkingSlot, getAvailableParkingSlots, bookParkingSlot, cancelBooking, getParkingDetailsByUserId, getAvailableSlotsByFloor, getAllFloors, postParkingSlot, getUniqueFloorsByArea, getAvailableBlocksByFloorAndArea, getSlotsByAreaFloorBlock } from "../controller/parking_cnt";
+import { getAllParkingSlots, putParkingSlot, deleteParkingSlot, getAvailableParkingSlots, bookParkingSlot, cancelBooking, getParkingDetailsByUserId, getAvailableSlotsByFloor, getAllFloors, postParkingSlot, getUniqueFloorsByArea, getAvailableBlocksByFloorAndArea, getSlotsByAreaFloorBlock, getBlocksByAreaFloorType, getSlotsByCriteria } from "../controller/parking_cnt";
 import route from '../../../events/src/routes/eventRoutes';
 
 const router = express.Router();
@@ -17,5 +17,7 @@ router.get("/parkingFloors", getAllFloors)
 router.get("/parkingFloor/:area", getUniqueFloorsByArea)
 router.get("/parking/block/:area/:floor", getAvailableBlocksByFloorAndArea)
 router.get("/parking/allSlots/:area/:floor/:block", getSlotsByAreaFloorBlock)
+router.get("/parking/block/:area/:floor/:parkingtype", getBlocksByAreaFloorType)
+router.get("/parkingSlots/:area/:floor/:parkingtype/:block", getSlotsByCriteria)
 
 export { router };
