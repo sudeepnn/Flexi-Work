@@ -193,3 +193,26 @@ export const getUniqueFloorsByArea = async (req: Request, res: Response): Promis
         res.status(500).json({ message: 'Error fetching floors', error });
     }
 };
+
+export const getAvailableBlocksByFloorAndArea = async (req: Request, res: Response): Promise<void> => {
+    const { area, floor } = req.params;
+
+    try {
+        // Find all available parking slots that match the specified area and floor
+        const slots = await ParkingSlotModel.find({ area, floor, available: true });
+
+        // Extract unique blocks from the available slots
+        const uniqueBlocks = Array.from(new Set(slots.map(slot => slot.block)));
+
+        // Create key-value pairs for the unique blocks
+        const blockPairs = uniqueBlocks.reduce((acc, block) => {
+            acc[`block_${block}`] = block; // You can customize the key format if needed
+            return acc;
+        }, {} as Record<string, string>);
+
+        // Respond with the unique blocks in key-value pair format
+        res.status(200).json({ area, floor, availableBlocks: blockPairs });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching available blocks', error });
+    }
+};
