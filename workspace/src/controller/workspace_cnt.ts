@@ -166,6 +166,22 @@ export const getAllBookings = async (req: Request, res: Response) => {
   }
 };
 
+export const getAllWorkspaces = async (req: Request, res: Response) => {
+  try {
+    const projectId = req.params.project; // Get project ID from URL parameters
+
+    // Fetch all workspaces related to the given projectId
+    const workspaces = await WorkspaceModel.find({ project: projectId });
+
+    // Send the workspaces as a response
+    res.status(200).json(workspaces);
+  } catch (error) {
+    // Handle any errors that occur during the fetching process
+    res.status(500).json({ message: 'Error fetching workspaces', error });
+  }
+};
+
+
 export const getABooking = async (req: Request, res: Response): Promise<void> => {
   try {
     const { user_id } = req.params;
@@ -255,5 +271,129 @@ export const getAvailableWorkspaces = async (req: Request, res: Response): Promi
   } catch (error) {
     // Handle any errors that occur during the fetching process
     res.status(500).json({ message: 'Error retrieving available workspaces', error });
+  }
+};
+
+export const bookmyWorkspace = async (req: Request, res: Response) => {
+  try {
+    const { _id } = req.params; // Get workspace ID from URL parameters
+    const { userId, name, contact, startTime } = req.body; // Booking details from request body
+
+    // Find the workspace by ID
+    const workspace = await WorkspaceModel.findById( _id );
+
+    if (!workspace) {
+       res.status(404).json({ message: 'Workspace not found' });
+    }
+    else{
+      
+    // Check if the workspace is available
+    if (!workspace.availability) {
+      res.status(400).json({ message: 'Workspace is not available for booking' });
+   }
+
+   // Create a new booking object
+   const newBooking = { userId, name, contact, startTime };
+
+   // Add the booking to the workspace and set availability to false
+   workspace.bookings = workspace.bookings ? [...workspace.bookings, newBooking] : [newBooking];
+   workspace.availability = false;
+
+   // Save the updated workspace
+   await workspace.save();
+
+   // Send the updated workspace as a response
+   res.status(201).json({ message: 'Workspace booked successfully', workspace });
+    }
+
+  } catch (error) {
+    res.status(500).json({ message: 'Error booking workspace', error });
+  }
+};
+
+export const getUserBookings = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params; // Get userId from URL parameters
+
+    // Find all workspaces containing bookings for the given userId
+    const workspaces = await workspace_model.find({ "bookings.userId": userId });
+
+    // Extract and enhance bookings with workspace_id and project fields
+    const userBookings = workspaces.flatMap(workspace => 
+      (workspace.bookings || [])
+        .filter(booking => booking.userId === userId)
+        .map(booking => ({
+          userId: booking.userId,
+          name: booking.name,
+          contact: booking.contact,
+          startTime: booking.startTime,
+          workspace_id: workspace.workspace_id,
+          project: workspace.project
+        }))
+    );
+
+    // Send the user's bookings as a response
+    res.status(200).json(userBookings);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching user bookings', error });
+  }
+};
+export const cancelworkspaceBooking = async (req: Request, res: Response) => {
+  try {
+    const { workspace_id, userId } = req.params; // Get workspace_id and userId from URL parameters
+
+    // Find the workspace by workspace_id
+    const workspace = await workspace_model.findOne({ workspace_id });
+
+    if (!workspace) {
+       res.status(404).json({ message: 'Workspace not found' });
+    }
+    else{
+      
+    // Check if there is a booking with the specified userId
+    const bookingExists = workspace.bookings?.some(booking => booking.userId === userId);
+
+    if (!bookingExists) {
+       res.status(404).json({ message: 'Booking not found for the specified user' });
+    }
+
+    // Empty the bookings array and set availability to true
+    workspace.bookings = [];
+    workspace.availability = true;
+
+    // Save the updated workspace
+    await workspace.save();
+
+    res.status(200).json({ message: 'Booking canceled successfully', workspace });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error canceling booking', error });
+  }
+};
+
+export const getBookingDetails = async (req: Request, res: Response) => {
+  try {
+    const { workspace_id } = req.params; // Get workspace_id from URL parameters
+
+    // Find the workspace by workspace_id
+    const workspace = await workspace_model.findOne({workspace_id: workspace_id });
+
+    if (!workspace) {
+       res.status(404).json({ message: 'Workspace not found' });
+    }
+    else{
+      
+    // Check if there are any bookings
+    if (!workspace.bookings || workspace.bookings.length === 0) {
+      res.status(404).json({ message: 'No bookings found for this workspace' });
+   }
+else{
+  
+   // Send the bookings as a response
+   res.status(200).json({ bookings: workspace.bookings });
+}
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching booking details', error });
   }
 };

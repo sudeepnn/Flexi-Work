@@ -8,6 +8,7 @@ export interface IWorkspaceBooking extends Document {
   //Booking_end_time: string;
   floor : number;
   project : string;
+  
 }
 
 const WorkspaceBookingSchema: Schema<IWorkspaceBooking> = new Schema({

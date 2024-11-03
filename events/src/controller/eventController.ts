@@ -147,7 +147,7 @@ export const registerForEvent = async (req: Request, res: Response): Promise<voi
   
   export const addVenue = async (req: Request, res: Response) :Promise<void> => {
     try {
-      const { venue_name, capacity, isAvailable } = req.body;
+      const { venue_name, capacity, isAvailable,imgurl } = req.body;
       const venue = new Venue({ venue_name, capacity, isAvailable });
       await venue.save();
       res.status(201).json(venue);
@@ -155,6 +155,7 @@ export const registerForEvent = async (req: Request, res: Response): Promise<voi
       res.status(500).send("Error adding venue");
     }
   };
+  
   
   // Get all venues, with optional availability filter
   export const getAllVenues = async (req: Request, res: Response) : Promise<void> => {
