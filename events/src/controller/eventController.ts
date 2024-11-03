@@ -6,7 +6,7 @@ import axios from "axios";
 
 export const createEvent = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { event_name, organizer_id, venue_id, date, time } = req.body;
+    const { event_name, organizer_id, venue_id, start_time, end_time } = req.body;
 
     // Check if the organizer exists and has the role 'manager'
     const userResponse = await axios.get(`http://localhost:3001/api/v1/users/${organizer_id}`);
@@ -27,8 +27,8 @@ export const createEvent = async (req: Request, res: Response): Promise<void> =>
     // Check if the venue is available for the specified date and time
     const isVenueAvailable = await Event.findOne({
       venue_id,
-      date,
-      time,
+      start_time,
+      end_time,
     });
     if (isVenueAvailable) {
       res.status(400).json({ message: 'Venue is not available for booking at this time.' });
@@ -36,7 +36,7 @@ export const createEvent = async (req: Request, res: Response): Promise<void> =>
     }
 
     // Create and save the event if all checks pass
-    const event = new Event({ event_name, organizer_id, venue_id, date, time });
+    const event = new Event({ event_name, organizer_id, venue_id, start_time, end_time });
     await event.save();
     res.status(201).json(event);
     
