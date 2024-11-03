@@ -147,8 +147,8 @@ export const registerForEvent = async (req: Request, res: Response): Promise<voi
   
   export const addVenue = async (req: Request, res: Response) :Promise<void> => {
     try {
-      const { venue_name, capacity, isAvailable } = req.body;
-      const venue = new Venue({ venue_name, capacity, isAvailable });
+      const { venue_name, capacity, isAvailable,imgurl } = req.body;
+      const venue = new Venue({ venue_name, capacity, isAvailable ,imgurl});
       await venue.save();
       res.status(201).json(venue);
     } catch (err) {
@@ -156,15 +156,15 @@ export const registerForEvent = async (req: Request, res: Response): Promise<voi
     }
   };
   
+  
   // Get all venues, with optional availability filter
-  export const getAllVenues = async (req: Request, res: Response) : Promise<void> => {
+  export const getAllVenues = async (req: Request, res: Response) => {
     try {
-      const { available } = req.query;
-      const query = available ? { isAvailable: available === "true" } : {};
-      const venues = await Venue.find(query);
-      res.json(venues);
-    } catch (err) {
-      res.status(500).send("Error retrieving venues");
+      const venues = await Venue.find(); // Fetch all venues from the database
+      res.status(200).json(venues); // Respond with the list of venues
+    } catch (error) {
+      console.error('Error fetching venues:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
   };
 
