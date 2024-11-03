@@ -4,10 +4,8 @@ interface Booking {
     userid: string;
     name: string;
     phone: number;
-    billingdate: Date;
     bookeddate: Date;
-    bookingexpiredate: Date;
-    payment: boolean;
+    
 }
 
 interface VendorSpace {
@@ -22,10 +20,8 @@ const bookingSchema = new Schema<Booking>({
     userid: { type: String, required: true },
     name: { type: String, required: true },
     phone: { type: Number, required: true },
-    billingdate: { type: Date, required: true },
     bookeddate: { type: Date, required: true },
-    bookingexpiredate: { type: Date, required: true },
-    payment: { type: Boolean, required: true }
+   
 });
 
 const vendorSpaceSchema = new Schema<VendorSpace>({
