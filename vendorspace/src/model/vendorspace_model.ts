@@ -12,9 +12,8 @@ interface Booking {
 
 interface VendorSpace {
     stallname: string;
-    location: string;
-    floor: number;
-    price: number;
+    rent: number;
+    imgurl:string;
     avalablestatus: boolean;
     bookings?: Booking[];
 }
@@ -31,9 +30,8 @@ const bookingSchema = new Schema<Booking>({
 
 const vendorSpaceSchema = new Schema<VendorSpace>({
     stallname: { type: String, required: true },
-    location: { type: String, required: true },
-    floor: { type: Number, required: true },
-    price: { type: Number, required: true },
+    rent: { type: Number, required: true },
+    imgurl: { type: String, required: true },
     avalablestatus: { type: Boolean, required: true },
     bookings: { type: [bookingSchema],default:[] }
 });

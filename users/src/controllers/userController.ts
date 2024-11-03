@@ -64,10 +64,10 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 
 
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
-  const { user_id, password, role } = req.body;
+  const { user_id, password } = req.body;
 
-  if (!user_id || !password || !role) {
-    res.status(400).json({ message: "Username, password, and role are required" });
+  if (!user_id || !password ) {
+    res.status(400).json({ message: "Username, password are required" });
     return;
   }
 
@@ -78,10 +78,10 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    if (user.role !== role) {
-      res.status(403).json({ message: "Invalid role selected" });
-      return;
-    }
+    // if (user.role !== role) {
+    //   res.status(403).json({ message: "Invalid role selected" });
+    //   return;
+    // }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {

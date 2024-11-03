@@ -14,4 +14,4 @@ const VenueSchema: Schema = new Schema({
   imgurl: { type: String } // new image url field
 });
 
-export default mongoose.model<IVenue>("Venue", VenueSchema);
+export default mongoose.model<IVenue>("venue", VenueSchema);
