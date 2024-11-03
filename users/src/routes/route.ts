@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { deleteUser, getAllUsers, getEmployeeDashboard, getEmployees, getUserById, loginUser, registerUser, updateEmployeeDetails, updateProfileImage, updateUser } from "../controllers/userController";
+import { deleteUser, forgotPassword, getAllUsers, getEmployeeDashboard, getEmployees, getUserById, loginUser, registerUser, resetPassword, updateEmployeeDetails, updateProfileImage, updateUser } from "../controllers/userController";
 import { upload } from "../multer/multerConfig";
 
 
@@ -15,6 +15,8 @@ router.delete("/users/:id", deleteUser);
 router.put("/user/update-user", updateEmployeeDetails)
 router.get("/users/dashboard/:user_id", getEmployeeDashboard)
 router.post('/update-profile-image', upload.single('profileImage'), updateProfileImage);
+router.post('/user/forget-password', forgotPassword)
+router.post('/user/reset-password/:token', resetPassword)
 
 
 export default router;

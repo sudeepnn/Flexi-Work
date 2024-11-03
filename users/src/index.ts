@@ -14,6 +14,5 @@ app.use(bodyParser.json());
 app.use("/api/v1", userRoutes);
 
 dbconnection();
-console.log(process.env.CLOUDINARY_API_KEY)
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

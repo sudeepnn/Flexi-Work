@@ -1,10 +1,12 @@
 import { Request, RequestHandler, Response } from "express";
 import User, { IUser } from "../model/user";
-import jwt from 'jsonwebtoken';
+import jwt,{JwtPayload} from 'jsonwebtoken';
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import axios from "axios";
 import cloudinary from "../config/cloudConfig";
+import nodemailer from 'nodemailer'
+import transporter from "../config/emailConfig";
 
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   const { user_id, password, email, name, phone, address, role } = req.body;
@@ -107,6 +109,74 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    const token = jwt.sign({ userId: user.user_id }, process.env.JWT_SECRET as string, { expiresIn: '2m' });
+
+    const resetLink = `http://localhost:3000/api/reset-password/${token}`;
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Password Reset Request',
+      text: `To reset your password, please click the following link: ${resetLink}`,
+      html: `<p>To reset your password, please click the following link:</p><a href="${resetLink}">Reset Password</a>`
+    };
+
+    // Use the imported transporter to send the email
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: "Password reset link sent to your email." });
+  } catch (error) {
+    console.error("Error in forgot password:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
+
+  // Define a regular expression for password validation
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+  // Check if the new password meets the requirements
+  if (!passwordRegex.test(newPassword)) {
+    res.status(400).json({ 
+      message: "Password must contain at least one uppercase letter, one lowercase letter, one number, one special character, and be at least 8 characters long." 
+    });
+    return;
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+    const userId = (decoded as JwtPayload).userId;
+
+    const user = await User.findOne({ user_id: userId });
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Password has been updated." });
+  } catch (error) {
+    console.error("Error resetting password:", error);
+    res.status(500).json({ message: "Invalid or expired token" });
+  }
+};
+
 export const getAllUsers = async (_: Request, res: Response) : Promise<void> => {
   try {
     const users = await User.find();
@@ -174,23 +244,48 @@ export const getEmployeeDashboard = async (req: Request, res: Response): Promise
       return;
     }
 
-    // Use Axios to fetch related information
-    const parkingDetailsPromise = axios.get(`http://localhost:3000/api/parking/${user_id}`);
-    const feedbackDetailsPromise = axios.get(`http://localhost:3002/api/feedback/user/${user_id}`);
-    //const registeredEventsPromise = axios.get(`http://your-events-service-url/api/events/user/${user_id}`);
+    // Initialize empty results with default messages
+    let parkingDetails = { message: "No parking bookings yet" };
+    let feedbackDetails = { message: "No feedback found" };
+    let workspaceDetails = { message: "No workspace bookings yet" };
+    let eventDetails = { message: "No event registrations yet" };
 
-    // Wait for all requests to complete
-    const [parkingDetailsResponse, feedbackDetailsResponse] = await Promise.all([
-      parkingDetailsPromise,
-      feedbackDetailsPromise,
-      //registeredEventsPromise,
-    ]);
+    // Fetch related information with individual try-catch for each service
+    try {
+      const parkingDetailsResponse = await axios.get(`http://localhost:3000/api/v1/parking/${user_id}`);
+      parkingDetails = parkingDetailsResponse.data;
+    } catch (error:any) {
+      console.warn("Parking service error:", error.message);
+    }
 
+    try {
+      const feedbackDetailsResponse = await axios.get(`http://localhost:3002/api/v1/feedback/user/${user_id}`);
+      feedbackDetails = feedbackDetailsResponse.data;
+    } catch (error:any) {
+      console.warn("Feedback service error:", error.message);
+    }
+
+    try {
+      const workspaceDetailsResponse = await axios.get(`http://localhost:3005/api/v1/workspaceBooking/${user_id}`);
+      workspaceDetails = workspaceDetailsResponse.data;
+    } catch (error:any) {
+      console.warn("Workspace service error:", error.message);
+    }
+
+    try {
+      const eventDetailsResponse = await axios.get(`http://localhost:3003/api/v1/event/registered/${user_id}`);
+      eventDetails = eventDetailsResponse.data;
+    } catch (error:any) {
+      console.warn("Event service error:", error.message);
+    }
+
+    // Respond with all the gathered information
     res.status(200).json({
       message: "Employee dashboard data retrieved successfully",
-      parkingDetails: parkingDetailsResponse.data,
-      feedbackDetails: feedbackDetailsResponse.data,
-      //registeredEvents: registeredEventsResponse.data,
+      parkingDetails,
+      feedbackDetails,
+      workspaceDetails,
+      eventDetails
     });
   } catch (err) {
     console.error("Error retrieving employee dashboard data:", err);
