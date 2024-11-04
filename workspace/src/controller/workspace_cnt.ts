@@ -338,6 +338,23 @@ export const getUserBookings = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error fetching user bookings', error });
   }
 };
+
+export const workspacecountdetails = async (req: Request, res: Response): Promise<void> => {
+  try {
+      const totalSlots = await workspace_model.countDocuments();
+      const availableCount = await workspace_model.countDocuments({ availability: true });
+      
+
+      res.json( {
+          totalSlots,
+          availableCount,
+          
+      });
+  } catch (error) {
+      console.error('Error fetching parking counts:', error);
+      throw new Error('Internal Server Error');
+  }
+};
 export const cancelworkspaceBooking = async (req: Request, res: Response) => {
   try {
     const { workspace_id, userId } = req.params; // Get workspace_id and userId from URL parameters

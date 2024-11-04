@@ -1,6 +1,6 @@
 import express,{Request,Response} from "express";
 
-import { getAllWorkSpace,postWorkSpace,putWorkSpace,deleteWorkSpace, getWorkspace, bookWorkspace, cancelBooking, getAllBookings, getAllProjects, getFloorByProject, getAvailableWorkspaces, getABooking, getAllWorkspaces, bookmyWorkspace, getUserBookings, cancelworkspaceBooking, getBookingDetails } from "../controller/workspace_cnt";
+import { getAllWorkSpace,postWorkSpace,putWorkSpace,deleteWorkSpace, getWorkspace, bookWorkspace, cancelBooking, getAllBookings, getAllProjects, getFloorByProject, getAvailableWorkspaces, getABooking, getAllWorkspaces, bookmyWorkspace, getUserBookings, cancelworkspaceBooking, getBookingDetails, workspacecountdetails } from "../controller/workspace_cnt";
 
 const router = express.Router();
 
@@ -22,5 +22,6 @@ router.put('/workspace/myworkspace/:_id',bookmyWorkspace)
 router.get('/bookings/user/:userId', getUserBookings);
 router.delete('/workspaces/:workspace_id/bookings/:userId', cancelworkspaceBooking);
 router.get('/workspacess/bookings/:workspace_id', getBookingDetails);
+router.get('/workspacescntdetails', workspacecountdetails);
 
 export {router}
