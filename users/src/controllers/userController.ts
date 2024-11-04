@@ -185,12 +185,44 @@ export const getAllUsers = async (_: Request, res: Response) : Promise<void> => 
     res.status(500).send("Error fetching users");
   }
 };
-export const getEmployees = async (_: Request, res: Response): Promise<void> => {
+export const getEmployees = async (req: Request, res: Response): Promise<void> => {
+  const page = parseInt(req.query.page as string) || 1;  // default to page 1
+  const limit = parseInt(req.query.limit as string) || 10;  // default to 10 items per page
+
   try {
-    const employees = await User.find({ role: "employee" });
-    res.json(employees);
+    const employees = await User.find({ role: "employee" })
+      .skip((page - 1) * limit)
+      .limit(limit);
+    
+    const totalEmployees = await User.countDocuments({ role: "employee" });
+    const totalPages = Math.ceil(totalEmployees / limit);
+
+    res.json({
+      data: employees,
+      currentPage: page,
+      totalPages,
+      totalEmployees
+    });
   } catch (err) {
     res.status(500).send("Error fetching employees");
+  }
+};
+
+export const getTotalCounts = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Count total employees
+    const totalEmployees = await User.countDocuments({ role: "employee" });
+    
+    // Count total managers
+    const totalManagers = await User.countDocuments({ role: "manager" });
+
+    // Respond with counts
+    res.json({
+      totalEmployees,
+      totalManagers
+    });
+  } catch (err) {
+    res.status(500).send("Error fetching counts");
   }
 };
 

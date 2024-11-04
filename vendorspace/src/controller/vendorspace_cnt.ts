@@ -97,6 +97,22 @@ export const bookingvendorspace = async (req: Request, res: Response) => {
         res.status(500).json({ message: "An error occurred", error });
     }
 };
+export const vendorcountdetails = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const totalSlots = await VendorSpaceModel.countDocuments();
+        const availableCount = await VendorSpaceModel.countDocuments({ avalablestatus: true });
+        
+  
+        res.json( {
+            totalSlots,
+            availableCount,
+            
+        });
+    } catch (error) {
+        console.error('Error fetching parking counts:', error);
+        throw new Error('Internal Server Error');
+    }
+  };
 
 export const cancelBooking = async (req: Request, res: Response) => {
     const { id, userid } = req.params; // ID of the vendor space and user ID

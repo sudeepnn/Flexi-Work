@@ -61,6 +61,26 @@ export const getAvailableParkingSlots = async (req: Request, res: Response): Pro
         res.status(500).json({ message: 'Error retrieving available parking slots', error });
     }
 };
+export const parkingcountdetails = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const totalSlots = await ParkingSlotModel.countDocuments();
+        const availableCount = await ParkingSlotModel.countDocuments({ available: true });
+        const notAvailableCount = await ParkingSlotModel.countDocuments({ available: false });
+        const twoWheelerCount = await ParkingSlotModel.countDocuments({ parkingtype: '2wheeler' });
+        const fourWheelerCount = await ParkingSlotModel.countDocuments({ parkingtype: '4wheeler' });
+
+        res.json( {
+            totalSlots,
+            availableCount,
+            notAvailableCount,
+            twoWheelerCount,
+            fourWheelerCount,
+        });
+    } catch (error) {
+        console.error('Error fetching parking counts:', error);
+        throw new Error('Internal Server Error');
+    }
+};
 
 export const bookParkingSlot = async (req: Request, res: Response): Promise<void> => {
     const {  userId, name, vehicalnumber, contact, startTime , _id} = req.body;
@@ -118,6 +138,8 @@ export const cancelBooking = async (req: Request, res: Response): Promise<void> 
         res.status(500).json({ message: "Error canceling booking", error });
     }
 };
+
+
 
 export const getParkingDetailsByUserId = async (req: Request, res: Response):Promise<void> => {
     const { userId } = req.params;
