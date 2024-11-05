@@ -11,9 +11,7 @@ router.get('/vendor-spaces/user/:userid', getVendorSpacesByUserId);
 router.post("/vendor-space/book/:id", bookingvendorspace);
 router.post('/vendorspace',postVendorSpace)
 router.delete('/vendorspacecancle/:id/:userid',cancelBooking)
-
 router.put('/vendorspace/:id', putVendorSpace);
-
 router.delete('/vendorspace:id',deleteVendorSpace)
 
 export {router}
