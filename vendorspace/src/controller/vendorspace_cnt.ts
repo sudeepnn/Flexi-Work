@@ -28,13 +28,15 @@ const getVendorSpacesByUserId = async (req: Request, res: Response): Promise<voi
         const { userid } = req.params;  // Extract userid from request parameters
         const vendorSpaces = await VendorSpaceModel.find({ "bookings.userid": userid }); // Query to find vendor spaces with matching user ID
 
-        if (!vendorSpaces.length) {
-            res.status(404).json({ message: 'No vendor spaces found for this user' });
-        } else {
+        // if (!vendorSpaces.length) {
+        //     res.status(404).json({ message: 'No vendor spaces found for this user' });
+        //     return
+        // } else {
             res.json(vendorSpaces); // Respond with the found vendor spaces
-        }
+        //}
     } catch (error) {
         res.status(500).json({ message: 'Error retrieving vendor spaces', error });
+        return
     }
 };
 export const getAvailableVendorSpaces = async (req: Request, res: Response): Promise<void> => {
