@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addVenue, cancelEvent, cancelEventRegistration, createEvent, deleteVenue, getAllEvents, getAllEventsWithVenues, getAllVenues, getEventAttendees, getEventsByVenueName, getUserBookedVenues, getUserRegistrations, getVenueById, getVenuesByOrganizerId, registerForEvent, updateEvent, updateVenue, updateVenueAvailability } from "../controller/eventController";
+import { addVenue, cancelEvent, cancelEventRegistration, countVenues, createEvent, deleteVenue, getAllEvents, getAllEventsWithVenues, getAllVenues, getEventAttendees, getEventsByVenueName, getUserBookedVenues, getUserRegistrations, getVenueById, getVenuesByOrganizerId, registerForEvent, updateEvent, updateVenue, updateVenueAvailability } from "../controller/eventController";
 
 const route = Router();
 
@@ -21,5 +21,6 @@ route.get('/event/:organizerId', getUserBookedVenues)
 route.get('/venue/:organizer_id', getVenuesByOrganizerId)
 route.get('/venues/:id', getVenueById)
 route.get('/allVenues',getAllEventsWithVenues)
+route.get('/count', countVenues)
 
 export default route;

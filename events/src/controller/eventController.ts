@@ -131,14 +131,37 @@ export const registerForEvent = async (req: Request, res: Response): Promise<voi
     }
   };
 
-  export const cancelEvent = async (req: Request, res: Response) :Promise<void>=> {
+  export const cancelEvent = async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+  
     try {
-      const { id } = req.params;
-      const event = await Event.findByIdAndDelete(id);
-      if (!event) res.status(404).send("Event not found");
-      res.send("Event cancelled successfully");
-    } catch (err) {
-      res.status(500).send("Error cancelling event");
+      // Find the event by its ID
+      const event = await Event.findById(id);
+      if (!event) {
+        res.status(404).json({ message: 'Event not found' });
+        return 
+      }
+  
+      // Set the venue's availability to true and make the event array null
+      const venue = await Venue.findById(event.venue_id);
+      if (venue) {
+        venue.isAvailable = true;
+        venue.event = []; // Clear the event array by setting it to null
+        await venue.save();
+      }
+  
+      // Delete all event registrations associated with the event
+      await EventRegistration.deleteMany({ event_name: event.event_name });
+  
+      // Delete the event itself
+      await Event.findByIdAndDelete(id);
+  
+      res.status(200).json({ message: 'Event canceled successfully' });
+      return 
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal server error' });
+      return 
     }
   };
 
@@ -382,5 +405,17 @@ export const getAllEventsWithVenues = async (req: Request, res: Response): Promi
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const countVenues = async (req: Request, res: Response): Promise<void> => {
+  try {
+      const count = await Venue.countDocuments();
+      const availableSpace = await Venue.countDocuments({isAvailable: true})
+      console.log(`count: ${count}`) // Counts all documents in the Venue collection
+      res.status(200).json({ count, availableSpace }); // Send the count in the response
+  } catch (error) {
+      console.error(error); // Log the error for debugging
+      res.status(500).send("Error counting venues");
   }
 };
