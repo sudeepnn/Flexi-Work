@@ -7,7 +7,7 @@ import cors from 'cors'
 
 const app = express()
 const PORT = 3003
-app.use(cors())
+app.use(cors());
 
 dbConnection()
 app.use(bodyParser.json())

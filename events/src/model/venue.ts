@@ -15,7 +15,7 @@ export interface IEvent extends Document {
   venue_id: string;
   start_time: string;
   end_time: string;
-  event_attendees : IEventRegistration[]
+  event_attendees ?: IEventRegistration[]
 }
 
 export interface IEventRegistration extends Document {
@@ -32,7 +32,7 @@ const EventRegistrationSchema: Schema = new Schema({
 const EventSchema: Schema = new Schema({
   event_name: { type: String, required: true },
   organizer_id: { type: String, required: true },
-  venue_id: { type: String, required: true },
+  venue_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Venue', required: true },
   start_time: { type: String, required: true },
   end_time: { type: String, required: true },
   event_attendees : {type: [EventRegistrationSchema]}

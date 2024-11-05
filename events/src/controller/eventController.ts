@@ -74,7 +74,7 @@ export const getAllEvents = async (_req: Request, res: Response): Promise<void> 
 
 export const registerForEvent = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { event_name, user_id } = req.body;
+    const { event_id, user_id } = req.body;
 
     // Check if the user exists
     const userResponse = await axios.get(`http://localhost:3001/api/v1/users/${user_id}`);
@@ -85,29 +85,35 @@ export const registerForEvent = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    // Check if the event exists by event name
-    const event = await Event.findOne({  event_name });
+    // Check if the event exists
+    const event = await Event.findById(event_id);
     if (!event) {
       res.status(404).json({ message: 'Event not found.' });
-      return 
+      return;
     }
 
-    // Check if the user is already registered for the event
-    const existingRegistration = await EventRegistration.findOne({ event_name, user_id });
+    // Check for existing registration
+    const existingRegistration = await EventRegistration.findOne({ event_name: event.event_name, user_id });
     if (existingRegistration) {
       res.status(400).json({ message: 'User is already registered for this event.' });
-      return 
+      return;
     }
 
-    // Create and save the registration if no duplicate exists
-    const registration = new EventRegistration({ event_name, user_id });
+    // Create and save the registration
+    const registration = new EventRegistration({ event_name: event.event_name, user_id });
     await registration.save();
+
+    // Correctly add registration details to the event's attendees
+    event.event_attendees?.push(registration);
+    await event.save();
+
     res.status(201).json(registration);
-    
+
   } catch (err) {
+    console.error("Error during event registration:", err);
     if (axios.isAxiosError(err)) {
       res.status(500).json({ message: 'Error connecting to the user service.' });
-      return 
+      return;
     }
     res.status(500).send("Error registering for event");
   }
@@ -343,5 +349,38 @@ export const getVenuesByOrganizerId =  async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching venues:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getVenueById = async (req: Request, res: Response): Promise<void> => {
+  try {
+      const { id } = req.params; // Destructure _id from request parameters
+      console.log(`Fetching venue with ID: ${id}`); // Debugging log
+
+      const venue = await Venue.findById(id); // Using findById to fetch the venue
+
+      if (!venue) {
+          res.status(404).json({ message: 'Venue not found' }); // Venue not found response
+          return; // Exit function if venue not found
+      }
+
+      res.status(200).json(venue); // Send the found venue details as response
+  } catch (error) {
+      console.error("Error fetching venue:", error); // Log the error
+      res.status(500).json({ message: 'Error fetching venue', error }); // Error response
+  }
+};
+
+export const getAllEventsWithVenues = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const events = await Event.find().populate({
+      path: 'venue_id', // The field you want to populate
+      select: 'venue_name' // Specify the fields you want from the Venue collection
+    });
+
+    res.json(events);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
