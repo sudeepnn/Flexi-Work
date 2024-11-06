@@ -110,28 +110,25 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
-  const { email } = req.body;
+  const { user_id } = req.body;
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ user_id });
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
     }
 
     const token = jwt.sign({ userId: user.user_id }, process.env.JWT_SECRET as string, { expiresIn: '2m' });
-
-    const resetLink = `http://localhost:3000/api/reset-password/${token}`;
+    const resetLink = `http://localhost:3004/reset-password/${token}`;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: email,
+      to: user.email, // Send to user's email found from user_id
       subject: 'Password Reset Request',
-      text: `To reset your password, please click the following link: ${resetLink}`,
       html: `<p>To reset your password, please click the following link:</p><a href="${resetLink}">Reset Password</a>`
     };
 
-    // Use the imported transporter to send the email
     await transporter.sendMail(mailOptions);
     res.status(200).json({ message: "Password reset link sent to your email." });
   } catch (error) {
