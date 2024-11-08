@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import ParkingSlotModel from "../model/parking_model";
 import axios from 'axios'
+import { sendParkingEndNotification } from "../config/emailService";
 
 export const getAllParkingSlots = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -322,5 +323,24 @@ export const getSlotsByCriteria = async (req: Request, res: Response): Promise<v
         res.status(200).json({ area, floor, parkingtype, block, slots });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching slots', error });
+    }
+};
+
+export const checkAndSendParkingEndEmails = async (req: Request, res: Response) => {
+    try {
+        // Assuming you have the booking details (userId, slotNumber, endTime) passed in the request body
+        const { userId, slotNumber, endTime } = req.body;
+
+        // Make an API call to the user service to fetch the user email using userId
+        const userResponse = await axios.get(`http://localhost:3001/api/v1/users/${userId}`);
+        const userEmail = userResponse.data.email; // Assuming the response contains the user's email
+
+        // Send the parking end notification to the user
+        await sendParkingEndNotification(userEmail, slotNumber, endTime);
+
+        res.status(200).json({ message: 'Parking end notification sent successfully' });
+    } catch (error: any) {
+        console.error("Error sending parking end notification:", error);
+        res.status(500).json({ message: 'Error sending parking end notification', error: error.message });
     }
 };

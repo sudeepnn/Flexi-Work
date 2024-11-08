@@ -4,6 +4,8 @@ import dbconnection from "./config/db";
 import bodyParser from "body-parser";
 
 import cors from 'cors'
+import { checkAndSendParkingEndEmails } from "./controller/parking_cnt";
+import cron from 'node-cron'
 
 const app = express();
 const port=3000
@@ -17,3 +19,7 @@ app.use(cors())
 app.listen(port,()=>{
     console.log(`Server is running on port ${port}`);
 });
+
+// cron.schedule('* * * * *', () => {
+//     checkAndSendParkingEndEmails({} as any, {} as any);
+// });
