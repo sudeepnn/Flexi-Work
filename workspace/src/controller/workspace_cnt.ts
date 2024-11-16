@@ -4,6 +4,7 @@ import workspace_booking from "../model/workspace_booking";
 import mongoose, { MongooseError } from "mongoose";
 import axios from 'axios'
 import workspace_model from "../model/workspace_model";
+import sendEmail from "../config/emailConfig";
 
 export const getAllWorkSpace = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -80,51 +81,84 @@ const USERS_MICROSERVICE_URL ='http://localhost:3001/api/v1/users';
 
 export const bookWorkspace = async (req: Request, res: Response): Promise<void> => {
   try {
+    const { workspace_id, user_id, Booking_start_time, project, name, floor } = req.body;
 
-    const { workspace_id, user_id, Booking_start_time, project,name, floor } = req.body;
-
+    console.log("Step 1: Starting workspace booking process"); // Initial log
 
     // Step 1: Validate user existence in the users microservice
+    let user;
     try {
+      console.log("Step 2: Fetching user data");
       const userResponse = await axios.get(`${USERS_MICROSERVICE_URL}/${user_id}`);
-      if (userResponse.status !== 200) {
-        res.status(404).json({ message: 'User not found' });
+      user = userResponse.data;
+
+      console.log("User data fetched:", user); // Log user data
+
+      if (!user || !user.email) {
+        console.log("User email not found in user service response.");
+        res.status(404).json({ message: 'User email not found' });
         return;
       }
     } catch (error) {
+      console.error("Error fetching user:", error);
       res.status(404).json({ message: 'User not found in users microservice' });
       return;
     }
 
     // Step 2: Check if the workspace is available
+    console.log("Step 3: Checking workspace availability");
     const workspace = await WorkspaceModel.findOne({ workspace_id, floor, project, availability: true });
     if (!workspace) {
+      console.log("Workspace not available for booking.");
       res.status(400).json({ message: 'Workspace is not available for booking' });
       return;
     }
 
     // Step 3: Create a new booking
+    console.log("Step 4: Creating booking");
     const booking = new workspace_booking({
       workspace_id,
       user_id,
       name,
       Booking_start_time,
       project,
-      
       floor
     });
     await booking.save();
 
     // Step 4: Update workspace availability to false
+    console.log("Step 5: Updating workspace availability");
     workspace.availability = false;
     await workspace.save();
 
+    // Step 5: Prepare to send confirmation email
+    console.log("Step 6: Preparing to send email...");
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Workspace Booking Confirmation',
+        text: `Hello ${user.name},\n\nYou have successfully booked the workspace ${workspace_id} on floor ${floor} for the project ${project}.\n\nBooking Start Time: ${Booking_start_time}\n\nThank you!`,
+      });
+      console.log('Confirmation email sent successfully.');
+    } catch (emailError) {
+      console.error("Error sending confirmation email:", emailError);
+      res.status(500).json({ message: 'Booking was successful, but email could not be sent.' });
+      return;
+    }
+
+    // Respond with booking success message
+    console.log("Step 7: Booking process complete");
     res.status(200).json({ message: 'Workspace booked successfully', booking });
+
   } catch (error) {
     console.error("Error booking workspace:", error);
     res.status(500).json({ message: 'Error booking workspace', error });
   }
 };
+
+
+
+
 
 
 
@@ -274,40 +308,69 @@ export const getAvailableWorkspaces = async (req: Request, res: Response): Promi
   }
 };
 
-export const bookmyWorkspace = async (req: Request, res: Response) => {
+export const bookmyWorkspace = async (req: Request, res: Response): Promise<void> => {
   try {
     const { _id } = req.params; // Get workspace ID from URL parameters
     const { userId, name, contact, startTime } = req.body; // Booking details from request body
 
     // Find the workspace by ID
-    const workspace = await WorkspaceModel.findById( _id );
+    const workspace = await WorkspaceModel.findById(_id);
 
     if (!workspace) {
-       res.status(404).json({ message: 'Workspace not found' });
+      res.status(404).json({ message: 'Workspace not found' });
+      return 
     }
-    else{
-      
+
     // Check if the workspace is available
     if (!workspace.availability) {
       res.status(400).json({ message: 'Workspace is not available for booking' });
-   }
-
-   // Create a new booking object
-   const newBooking = { userId, name, contact, startTime };
-
-   // Add the booking to the workspace and set availability to false
-   workspace.bookings = workspace.bookings ? [...workspace.bookings, newBooking] : [newBooking];
-   workspace.availability = false;
-
-   // Save the updated workspace
-   await workspace.save();
-
-   // Send the updated workspace as a response
-   res.status(201).json({ message: 'Workspace booked successfully', workspace });
+      return 
     }
 
+    // Create a new booking object
+    const newBooking = { userId, name, contact, startTime };
+
+    // Add the booking to the workspace and set availability to false
+    workspace.bookings = workspace.bookings ? [...workspace.bookings, newBooking] : [newBooking];
+    workspace.availability = false;
+
+    // Save the updated workspace
+    await workspace.save();
+
+    // Get the user's email (assumes you have a method to retrieve user details)
+    const userResponse = await axios.get(`http://localhost:3001/api/v1/users/${userId}`);
+    const userEmail = userResponse.data.email;
+
+    // Send confirmation email
+    const subject = 'Workspace Booking Confirmation';
+    const text = `
+      Hello ${name},
+
+      You have successfully booked the workspace with ID: ${workspace.workspace_id}.
+      Booking Start Time: ${new Date(startTime).toLocaleString()}
+
+      Thank you for using our service!
+
+      Regards,
+      The Workspace Booking Team
+    `;
+
+    await sendEmail({
+      to: userEmail,
+      subject: subject,
+      text: text,
+    });
+
+    // Send the updated workspace as a response
+    res.status(201).json({
+      message: 'Workspace booked successfully, confirmation email sent.',
+      workspace,
+    });
+
   } catch (error) {
+    console.error('Error booking workspace:', error);
     res.status(500).json({ message: 'Error booking workspace', error });
+    return 
   }
 };
 

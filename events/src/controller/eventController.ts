@@ -4,6 +4,20 @@ import Venue, { IEvent } from "../model/venue";
 //import eventRegistration from "../model/eventRegistration";
 import axios from "axios";
 import mongoose from "mongoose";
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+
+dotenv.config()
+console.log(process.env.EMAIL_USER)
+console.log(process.env.EMAIL_PASS)
+
+const transporter = nodemailer.createTransport({
+  service: 'Gmail', // Use Gmail or another email service
+  auth: {
+    user: process.env.EMAIL_USER, // Set in environment variables for security
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 export const createEvent = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -76,7 +90,7 @@ export const registerForEvent = async (req: Request, res: Response): Promise<voi
   try {
     const { event_id, user_id } = req.body;
 
-    // Check if the user exists
+    // Step 1: Check if the user exists
     const userResponse = await axios.get(`http://localhost:3001/api/v1/users/${user_id}`);
     const user = userResponse.data;
 
@@ -85,37 +99,47 @@ export const registerForEvent = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    // Check if the event exists
+    // Step 2: Check if the event exists
     const event = await Event.findById(event_id);
     if (!event) {
       res.status(404).json({ message: 'Event not found.' });
       return;
     }
 
-    // Check for existing registration
+    // Step 3: Check for existing registration
     const existingRegistration = await EventRegistration.findOne({ event_name: event.event_name, user_id });
     if (existingRegistration) {
       res.status(400).json({ message: 'User is already registered for this event.' });
       return;
     }
 
-    // Create and save the registration
+    // Step 4: Create and save the registration
     const registration = new EventRegistration({ event_name: event.event_name, user_id });
     await registration.save();
 
-    // Correctly add registration details to the event's attendees
+    // Step 5: Add registration details to the event's attendees
     event.event_attendees?.push(registration);
     await event.save();
 
-    res.status(201).json(registration);
+    // Step 6: Send confirmation email
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: user.email, // Assuming `user.email` is available from the user data
+      subject: `Confirmation of Registration for ${event.event_name}`,
+      text: `Hello ${user.name},\n\nThank you for registering for the event "${event.event_name}". We look forward to seeing you on ${event.start_time}!\n\nBest regards,\nEvent Team`,
+    };
 
+    await transporter.sendMail(mailOptions);
+
+    res.status(201).json({ message: 'Registration successful and confirmation email sent.', registration });
+    
   } catch (err) {
     console.error("Error during event registration:", err);
     if (axios.isAxiosError(err)) {
       res.status(500).json({ message: 'Error connecting to the user service.' });
       return;
     }
-    res.status(500).send("Error registering for event");
+    res.status(500).json({ message: 'Error registering for event.' });
   }
 };
 

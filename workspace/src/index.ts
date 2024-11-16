@@ -3,6 +3,9 @@ import { router } from "./routes/routes";
 import dbconnection from "./config/db";
 import bodyParser from "body-parser";
 import cors from 'cors'
+import dotenv from 'dotenv';
+
+dotenv.config()
 const app = express();
 const port=3005
 app.use(bodyParser.json());
